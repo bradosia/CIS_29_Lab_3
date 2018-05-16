@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.2.0">
+  <zoom_level>9</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>423</x>
+      <y>72</y>
+      <w>702</w>
+      <h>108</h>
+    </coordinates>
+    <panel_attributes>Parser
+--
+
+--
+Parser()
+~Parser()
+bool productListXMLNodetoObject(XMLNode&amp; productListXMLNode, ProductTable&amp; productTableObject)
+bool cartListXMLNodetoObject(XMLNode&amp; cartListXMLNode, CartList&amp; cartListObject, ProductTable&amp; productTableObject)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>495</x>
+      <y>207</y>
+      <w>351</w>
+      <h>153</h>
+    </coordinates>
+    <panel_attributes>ProductTable 
+--
+Code39CharTable code39CharTable
+HashTable&lt;string, Product*&gt; code39ItemToProductTable
+--
+ProductTable()
+~ProductTable()
+bool insert(string key, Product* val)
+bool insert(Product* val)
+Product* at(string key)
+string toString()</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>828</x>
+      <y>702</y>
+      <w>324</w>
+      <h>144</h>
+    </coordinates>
+    <panel_attributes>Code39CharTable
+--
+vector&lt;unsigned int&gt; charIntToCode39IntTable
+vector&lt;char&gt; Code39IntToCharTable
+--
+Code39CharTable()
+~Code39CharTable()
+void buildCode39IntToCharTable()
+bool intToChar(unsigned int intIn, char&amp; charOut)
+bool charToInt(char charIn, unsigned int&amp; intOut)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>801</x>
+      <y>351</y>
+      <w>72</w>
+      <h>171</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>60.0;170.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>675</x>
+      <y>351</y>
+      <w>27</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;50.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>0</x>
+      <y>99</y>
+      <w>351</w>
+      <h>126</h>
+    </coordinates>
+    <panel_attributes>FileHandler
+--
+
+--
+FileHandler()
+~FileHandler()
+bool readLines(string fileName, ifstream&amp; fileStream)
+bool writeLines(string fileName, ofstream&amp; fileStream)
+bool close(ifstream&amp; fileStream)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>135</x>
+      <y>0</y>
+      <w>243</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>UML Diagram
+Lab 2 - Containers and Regex
+Code3of9 Symbology in XML Container
+By: Branden Lee</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>450</x>
+      <y>576</y>
+      <w>351</w>
+      <h>144</h>
+    </coordinates>
+    <panel_attributes>HashTable&lt;K keyType, T valueType&gt;
+--
+vector&lt;pair&lt;K, T&gt;*&gt; table
+const unsigned int insertAttempts = 5
+--
+HashTable()
+HashTable(unsigned int size)
+~HashTable()
+bool insert(K key, T val)
+T at(K key)
+T atIndex(unsigned int index)
+unsigned int hash(K key)
+unsigned int hash(unsigned int key)
+unsigned int size()</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>0</x>
+      <y>405</y>
+      <w>432</w>
+      <h>279</h>
+    </coordinates>
+    <panel_attributes>XMLNode
+--
+string name
+string value
+vector&lt;XMLNode*&gt; childNodes
+XMLNode* parentNode
+--
+XMLNode()
+XMLNode(string name_, XMLNode* parentNode_)
+~XMLNode()
+void valueAppend(string str)
+string getName()
+string getValue()
+XMLNode* getParent()
+XMLNode* addChild(string str)
+XMLNode* getChild(unsigned int index)
+bool findChild(string name_, XMLNode*&amp; returnNode, unsigned int index)
+unsigned int childrenSize()
+unsigned int findChildSize(string name_)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>0</x>
+      <y>243</y>
+      <w>432</w>
+      <h>135</h>
+    </coordinates>
+    <panel_attributes>XMLParser
+--
+unsigned int fileSize
+unsigned int filePos
+char bufferInChar[2]
+string streamBuffer
+--
+XMLParser()
+~XMLParser()
+bool documentStream(istream&amp; streamIn, XMLNode&amp; xmlDoc)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>585</x>
+      <y>396</y>
+      <w>216</w>
+      <h>153</h>
+    </coordinates>
+    <panel_attributes>Product
+--
+string name
+double price
+--
+ProductTable()
+~ProductTable()
+bool insert(string key, Product* val)
+bool insert(Product* val)
+Product* at(string key)
+string toString()</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>522</x>
+      <y>351</y>
+      <w>27</w>
+      <h>243</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;250.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>828</x>
+      <y>504</y>
+      <w>324</w>
+      <h>171</h>
+    </coordinates>
+    <panel_attributes>Code39Item
+--
+Code39CharTable* code39CharTable
+string binaryString, codeString
+queue&lt;int&gt; intQueue
+--
+Code39Item(Code39CharTable* code39CharTablePtr)
+~Code39Item()
+void setBinaryString(string binaryString_)
+void setCodeString(string codeString_)
+bool toCodeString(string&amp; code39CharItem)
+bool toBinaryString(string&amp; code39CharItem)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>882</x>
+      <y>207</y>
+      <w>171</w>
+      <h>108</h>
+    </coordinates>
+    <panel_attributes>CartList
+--
+vector&lt;Cart*&gt; cartList
+--
+CartList()
+~CartList()
+void insert(Cart* cardPtr)
+string toString()</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>873</x>
+      <y>342</y>
+      <w>198</w>
+      <h>144</h>
+    </coordinates>
+    <panel_attributes>Cart
+--
+vector&lt;Product*&gt; productList
+unsigned int cartNumber
+--
+Cart()
+Cart(unsigned int cartNumber_)
+~Cart()
+void insert(Product* productPtr)
+string toString()</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>792</x>
+      <y>423</y>
+      <w>99</w>
+      <h>27</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;90.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>963</x>
+      <y>306</y>
+      <w>27</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;40.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>216</x>
+      <y>369</y>
+      <w>27</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;40.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>657</x>
+      <y>171</y>
+      <w>27</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;40.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>963</x>
+      <y>171</y>
+      <w>27</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;40.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>990</x>
+      <y>666</y>
+      <w>27</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;40.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>423</x>
+      <y>171</y>
+      <w>81</w>
+      <h>306</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;320.0;70.0;10.0</additional_attributes>
+  </element>
+</diagram>
