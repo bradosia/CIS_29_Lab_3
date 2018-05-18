@@ -16,7 +16,12 @@
 #include <regex>
 #include <stack>
 #include <queue>
+#include <cstring>
+#include <thread>
+#include <future>
 using namespace std;
+
+#define BUFFER_SIZE 256
 
 /**
  @class FileHandler
@@ -100,14 +105,16 @@ public:
  */
 class XMLParser {
 private:
-	unsigned int fileSize, filePos;
-	char bufferInChar[2];
-	string streamBuffer;
+	std::regex tagOpenRegex, tagEndRegex;
 public:
 	XMLParser();
 	~XMLParser() {
 	}
 	bool documentStream(istream& streamIn, XMLNode& xmlDoc);
+	bool bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
+			XMLNode* xmlNodeCurrent, stack<string>& documentStack, unsigned int mode);
+	bool nodePop(string& tagString, XMLNode& xmlDoc, XMLNode* xmlNodeCurrent, stack<string>& documentStack);
+	bool nodePush(string& tagString, XMLNode& xmlDoc, XMLNode* xmlNodeCurrent, stack<string>& documentStack);
 };
 
 /**
@@ -199,7 +206,7 @@ public:
  */
 class Code39Item {
 private:
-	Code39CharTable* code39CharTable;
+	Code39CharTable * code39CharTable;
 	string binaryString, codeString;
 	queue<int> intQueue;
 public:
@@ -292,7 +299,7 @@ T HashTable<K, T>::at(K key) {
 	unsigned int attempts = insertAttempts;
 	K keyOriginal = key;
 	unsigned int keyInt = hash(key);
-	T ret;
+	T ret { };
 	for (; attempts > 0; attempts--) {
 		if (table[keyInt] != nullptr && table[keyInt]->first == keyOriginal) {
 			ret = table[keyInt]->second;
@@ -422,9 +429,8 @@ unsigned int XMLNode::findChildSize(string name_) {
  * XMLParser Implementation
  */
 XMLParser::XMLParser() {
-	fileSize = filePos = 0;
-	bufferInChar[1] = 0;
-	streamBuffer = "";
+	tagOpenRegex = regex("\\<(.*?)\\>");   // matches an opening tag <tag>
+	tagEndRegex = regex("\\<\\/(.*?)\\>");   // matches an ending tag </tag>
 }
 bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
 	/* Parsing Steps:
@@ -435,82 +441,125 @@ bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
 	 * 4. value between <child></child> is added to the node on top of the stack
 	 * 5. if </tag> found then it is popped off the stack
 	 * */
+	unsigned int fileSize, filePos, bufferSize, mode;
+	string streamBuffer;
 	stack<string> documentStack;
-	string tagPop, matchGroupString;
+	bufferSize = BUFFER_SIZE;
+	fileSize = filePos = mode = 0;
+	streamBuffer = "";
 	XMLNode* xmlNodeCurrent = &xmlDoc;
+	char bufferInChar[BUFFER_SIZE];
 	streamIn.seekg(0, ios::end); // set the pointer to the end
 	fileSize = streamIn.tellg(); // get the length of the file
 	streamIn.seekg(0, ios::beg); // set the pointer to the beginning
-	std::regex tagOpen("\\<(.*?)\\>");   // matches an opening tag <tag>
-	std::regex tagEnd("\\<\\/(.*?)\\>");   // matches an ending tag </tag>
-	for (filePos = 0; filePos < fileSize; filePos++) {
-		// read one byte at a time
-		streamIn.seekg(filePos, ios::beg);
-		streamIn.read(bufferInChar, 1);
-		streamBuffer.append(bufferInChar);
-		if (bufferInChar[0] == '<') {
-			/* opening angle bracket for a tag
-			 * we assume that text before this is the value of current xml node
-			 */
-			xmlNodeCurrent->valueAppend(
-					streamBuffer.substr(0, streamBuffer.size() - 1));
-			streamBuffer = "<";
-		} else if (bufferInChar[0] == '>') {
-			/* ending angle bracket for a tag
-			 * let's use regex to grab the tag name between the angled brackets
-			 * let's first check if we just ended an ending tag </>
-			 */
-			std::smatch m;
-			regex_match(streamBuffer, m, tagEnd);
-			if (!m.empty()) {
-				/* extract matched group
-				 * a .trim() method would be great...
-				 */
-				try {
-					matchGroupString = m[1].str(); // match group
-				} catch (...) {
-					//nothing
-				}
-				if (matchGroupString.length() > 0) {
-					/* pop nodes off stack until end tag is found
-					 * can't go higher than the document root
-					 */
-					tagPop = "";
-					while (!documentStack.empty() && tagPop != matchGroupString) {
-						tagPop = documentStack.top();
-						documentStack.pop();
-						xmlNodeCurrent = xmlNodeCurrent->getParent();
-						if (xmlNodeCurrent == nullptr) {
-							xmlNodeCurrent = &xmlDoc;
-						}
-					}
-				}
-			} else {
-				/* now check if we just ended an opening tag <>
-				 */
-				std::smatch m;
-				regex_match(streamBuffer, m, tagOpen);
-				if (!m.empty()) {
-					try {
-						matchGroupString = m[1].str(); // match group
-					} catch (...) {
-						//nothing
-					}
-					if (matchGroupString.length() > 0) {
-						documentStack.push(matchGroupString);
-						xmlNodeCurrent = xmlNodeCurrent->addChild(
-								matchGroupString);
-						if (xmlNodeCurrent == nullptr) {
-							xmlNodeCurrent = &xmlDoc;
-						}
-					}
-				}
-			}
-			streamBuffer = "";
+	while (filePos < fileSize) {
+		streamIn.seekg(filePos, ios::beg); // seek new position
+		if (filePos + bufferSize > fileSize) {
+			bufferSize = fileSize - filePos;
 		}
+		memset(bufferInChar, 0, sizeof(bufferInChar)); // zero out buffer
+		streamIn.read(bufferInChar, bufferSize);
+		streamBuffer.append(bufferInChar);
+		bufferSearch(streamBuffer, xmlDoc, xmlNodeCurrent, documentStack, mode);
+		// advance buffer
+		filePos += bufferSize;
 	}
 	// remaining buffer belongs to current node value
 	xmlNodeCurrent->valueAppend(streamBuffer);
+	return true;
+}
+
+bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
+		XMLNode* xmlNodeCurrent, stack<string>& documentStack, unsigned int mode) {
+	unsigned int ticks = 0;
+	unsigned int tagOpenPos, tagEndPos, noPos;
+	noPos = (unsigned int) string::npos;
+	string tagPop, matchGroupString;
+	while (ticks < 9999) { // infinite loop protection
+		ticks++;
+		if (mode == 0) {
+			tagOpenPos = (unsigned int) streamBuffer.find("<");
+			if (tagOpenPos != noPos) {
+				/* opening angle bracket for a tag
+				 * we assume that text before this is the value of current xml node
+				 */
+				mode = 1;
+				tagOpenPos = 0;
+				xmlNodeCurrent->valueAppend(streamBuffer.substr(0, tagOpenPos));
+				streamBuffer.erase(0, tagOpenPos);
+			} else {
+				break;
+			}
+		} else if (mode == 1) {
+			// expecting ending angle bracket for a tag
+			tagEndPos = (unsigned int) streamBuffer.find(">");
+			if (tagEndPos != noPos) {
+				// let's use regex to grab the tag name between the angled brackets
+				// let's first check if we just ended an ending tag </>
+				std::smatch m;
+				regex_search(streamBuffer, m, tagEndRegex);
+				if (!m.empty()) {
+					/* extract matched group
+					 * a .trim() method would be great...
+					 */
+					try {
+						matchGroupString = m[1].str(); // match group
+					} catch (...) {
+						matchGroupString = "";
+					}
+					nodePop(matchGroupString, xmlDoc, xmlNodeCurrent, documentStack);
+				} else {
+					// now check if we just ended an opening tag <>
+					std::smatch m;
+					regex_search(streamBuffer, m, tagOpenRegex);
+					if (!m.empty()) {
+						try {
+							matchGroupString = m[1].str(); // match group
+						} catch (...) {
+							matchGroupString = "";
+						}
+						nodePush(matchGroupString, xmlDoc, xmlNodeCurrent, documentStack);
+					}
+				}
+				// erase to the end of the ending angle bracket ">"
+				streamBuffer.erase(0, tagEndPos + 1);
+				mode = 0;
+			} else {
+				break;
+			}
+		}
+	}
+	return true;
+}
+
+bool XMLParser::nodePop(string& tagString, XMLNode& xmlDoc,
+		XMLNode* xmlNodeCurrent, stack<string>& documentStack) {
+	/* pop nodes off stack until end tag is found
+	 * can't go higher than the document root
+	 */
+	string tagPop = "";
+	if (tagString.length() > 0) {
+		while (!documentStack.empty() && tagPop != tagString) {
+			tagPop = documentStack.top();
+			documentStack.pop();
+			xmlNodeCurrent = xmlNodeCurrent->getParent();
+			if (xmlNodeCurrent == nullptr) {
+				xmlNodeCurrent = &xmlDoc;
+			}
+		}
+	}
+	return true;
+}
+
+bool XMLParser::nodePush(string& tagString, XMLNode& xmlDoc,
+		XMLNode* xmlNodeCurrent, stack<string>& documentStack) {
+	if (tagString.length() > 0) {
+		documentStack.push(tagString);
+		xmlNodeCurrent = xmlNodeCurrent->addChild(tagString);
+		if (xmlNodeCurrent == nullptr) {
+			xmlNodeCurrent = &xmlDoc;
+		}
+	}
 	return true;
 }
 
@@ -840,7 +889,7 @@ bool Parser::cartListXMLNodetoObject(XMLNode& cartListXMLNode,
 	bool returnValue = false;
 	unsigned int i, j, n, n1, cartNumber;
 	XMLNode* nodeXMLCarts, *nodeCart, *nodeItem;
-	Cart* cartPtr;
+	Cart* cartPtr = NULL;
 	// XMLCarts level
 	if (cartListXMLNode.findChild("XMLCarts", nodeXMLCarts, 0)) {
 		returnValue = true;
@@ -917,10 +966,12 @@ int main() {
 		 * because we want to stream the data and decode it as we read.
 		 * This way very large files won't lag or crash the program.
 		 */
-		if (xmlparser.documentStream((istream&) fileStreamInProducts,
-				ProductsXML)
-				&& xmlparser.documentStream((istream&) fileStreamInCarts,
-						CartsXML)) {
+		istream& t = (istream&) fileStreamInProducts;
+		auto parseProductsXMLFuture = async(&XMLParser::documentStream,
+				&xmlparser, ref(t), ref(ProductsXML));
+		auto parseCartsXMLFuture = async(&XMLParser::documentStream, &xmlparser,
+				ref((istream&) fileStreamInCarts), ref(CartsXML));
+		if (parseProductsXMLFuture.get() && parseCartsXMLFuture.get()) {
 			cout << "XML Files successfully parsed!" << endl;
 			flag = true;
 		} else {

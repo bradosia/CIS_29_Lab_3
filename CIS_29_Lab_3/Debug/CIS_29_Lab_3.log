@@ -1,0 +1,3 @@
+﻿  CIS29Lab3.cpp
+f:\schoolcode\cis_29_lab_3\src\cis29lab3.cpp(453): warning C4244: '=': conversion from 'std::streamoff' to 'unsigned int', possible loss of data
+  CIS_29_Lab_3.vcxproj -> F:\schoolCode\CIS_29_Lab_3\Debug\CIS_29_Lab_3.exe
