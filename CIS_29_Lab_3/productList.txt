@@ -1,0 +1,284 @@
+ Product Table 
+---------------
+Product Name         Price
+Yeast                16.48
+Linguini             15.21
+Conditioner          15.26
+Asparagus            20.23
+Mints                14.32
+Fruit                6.24
+Fruit juice          19.86
+Steak sauce          6.35
+Cantaloupe           8.99
+Endives              4.62
+Instant Noodles      16.15
+Pineapple            15.00
+Kohlrabi             3.83
+Radishes             17.98
+Sausage              4.32
+Cauliflower          14.74
+Mustard              7.67
+Marmalade            9.61
+Cucumbers            11.72
+Collards             11.52
+Cherries             13.34
+Decorations          8.76
+Basil                14.90
+Graham crumbles      8.15
+BBQ sauce            18.73
+Detergent            15.18
+Cereal               4.55
+Mushrooms            5.01
+Tartar Sauce         19.88
+Roast beef           20.67
+Drink crystals       13.34
+Cheezies             19.24
+Flu medicine         17.09
+Honey                5.29
+Muslix               5.83
+Cocoa powder         12.46
+Cheese               4.31
+Oregano              1.35
+Broccoli             14.42
+Rotini               12.31
+Wax paper            18.43
+Sport drink          14.26
+Beets                18.30
+Cilantro             5.73
+TV dinners           3.50
+Paprika              13.82
+Cloves               12.02
+Clams                2.27
+Oil cooking          13.48
+Steak                6.92
+Bologna              4.80
+Bananas              16.76
+Treats               18.64
+Veggie burgers       1.47
+Pabulum              8.54
+Halibut              3.20
+Cabbage              12.36
+JellO                20.58
+Lemons               11.90
+Relish               19.32
+Cookies              2.74
+Liver                18.61
+Raisin bran          9.15
+Chips                13.34
+Dried fruit          2.81
+Bagels               9.16
+Olives               18.46
+Pork chops           2.13
+Carrots              3.47
+Egg plant            20.66
+Sugar                4.91
+Pepperoni            19.74
+Cake mix             18.73
+Peanut butter        10.97
+All spice            4.14
+Detergent            7.74
+Ketchup              8.58
+Shampoo              7.35
+Fish sticks          2.88
+Green peppers        10.10
+Vacuum bags          20.37
+Spinach              19.17
+Melon                6.21
+Spaghetti            17.58
+Croissants           20.62
+Breath mints         15.99
+Paper plates         13.48
+Onions               13.83
+Waffles              3.53
+Hair gel             18.04
+Corn chips           14.51
+Salad dressing       3.52
+Baguette             14.64
+Ravioli              1.31
+Sprinkles            4.31
+Sardines             19.65
+Mixed vegetables     9.11
+Half & half          10.69
+Chew toy             1.21
+Ice cream            12.72
+Fruit salad          12.65
+Stir fry             7.59
+Lobster              16.69
+Pot scrubbers        11.09
+Air freshener        12.43
+Facial tissue        19.80
+Squash               10.39
+Mangoes              9.06
+Parsley              13.03
+Body wash            7.91
+Peaches              13.90
+Sword fish           11.78
+Bottle liners        19.44
+Turkey               13.95
+Egg substitute       13.79
+Apples               14.30
+Bleach               17.85
+Garbage bags         7.03
+Mashed potatoes      13.35
+Mousse               11.02
+Kiwis                11.97
+Pancakes             8.30
+Pita bread           6.66
+Deodorant            18.58
+Medicine             9.56
+Pickles              10.63
+Pectin               1.56
+Bread                2.82
+Pizza                1.05
+Rutabagas            13.36
+Bay leaf             14.08
+Pears                5.71
+Coffee               18.98
+Yellow peppers       6.73
+Protein bars         11.18
+Sourdough            11.34
+Beef pot pie         5.53
+Whole grain          19.78
+Salmon               16.39
+Nacho chips          8.31
+Lip balm             9.70
+Tub cleaner          11.51
+Band-aids            4.59
+Papaya               20.29
+Chives               20.62
+Potatoes             17.48
+Red peppers          8.72
+Mineral water        9.30
+Mac&cheese           2.07
+Burgers              5.04
+Pumpernickel         11.50
+Mixers               15.77
+Cat food             17.31
+Hot sauce            12.89
+Pancake mix          13.60
+Popcorn              19.08
+Burritos             6.07
+Butter               2.64
+Allergy medication   20.06
+Hickory sticks       1.12
+Sour cream           17.68
+Lettuce              7.63
+Gravy                19.94
+Raspberries          4.25
+Chard                13.79
+Avocados             9.38
+Teething ring        18.72
+Blue berries         19.78
+Tater tots           9.30
+Fabric softener      19.58
+Popsicles            3.77
+Muffin Mix           2.62
+Mussels              15.41
+Hash browns          13.68
+Rice crispies        3.63
+Cottage cheese       15.82
+Celery               2.74
+Tomatoes             6.36
+Soy sauce            9.36
+Dental floss         11.64
+Molasses             15.01
+Candy                2.35
+Hot dogs             13.05
+Cranberries          15.17
+Cleaner              4.65
+Cream                4.74
+Glass's cleaner      15.99
+Chick peas           15.73
+Brownies             18.76
+Syrup                3.46
+Napkins              17.70
+Toilet paper         11.10
+Shreddies            20.78
+Hand soap            14.51
+Ginger               1.98
+French fries         19.82
+Cotton swabs         15.90
+Plastic cups         18.20
+Crackers             17.89
+Candles              11.87
+Alfredo sauce        10.71
+Granola bars         2.88
+Bottles              7.16
+Doughnuts            2.10
+English muffins      3.88
+Plums                1.13
+Taquitos             14.26
+Oven cleaner         8.15
+Diapers              20.37
+Aluminum foil        8.92
+Bisquick             6.33
+Bean salad           6.26
+Tilapia              2.43
+Pretzels             1.17
+Macaroni             18.83
+Chip dip             11.33
+Salami               2.71
+Sponges              5.71
+Tortillas            3.99
+Zucchini             13.20
+Jelly                1.67
+Oysters              14.42
+Parsnips             12.46
+Lunch bags           7.43
+Perogies             1.51
+Strawberries         15.26
+Nail clippers        6.45
+Beans                5.54
+Scrubbers            1.89
+Oranges              19.30
+Flea collar          2.33
+Bacon                1.68
+Yogurt               7.99
+Chili                3.39
+Antacids             10.88
+Sorbet               8.66
+Apple sauce          16.84
+Egg Nog              11.82
+Cinnamon             3.28
+Soy milk             3.12
+Puffed wheat         20.32
+Paper towels         11.91
+Limes                5.58
+Sprouts              5.54
+Peanuts              3.69
+Bar soap             12.72
+Pasta                9.20
+Icing                10.28
+Garlic               14.17
+Rye bread            5.00
+Baby food            5.82
+Shrimp               17.92
+Vanilla extract      11.05
+Salsa                9.80
+Cold medicine        15.81
+Couscous             9.27
+Club soda            10.01
+Pumpkin              7.10
+Nectarines           1.76
+Juice                20.89
+Flounder             16.03
+Flour                7.57
+Maple syrup          13.75
+Formula              18.52
+Mozzarella sticks    8.26
+Whipping cream       13.76
+Grapes               11.35
+Apricots             7.51
+Dog food             15.79
+Oatmeal              6.55
+Mayonnaise           8.25
+Bouillon cubes       5.46
+Dish soap            18.64
+Trail mix            12.90
+Margarine            14.13
+Chocolate            7.52
+Sealable bags        18.84
+Berries              11.89
+Vinegar              5.85
+Anchovies            6.04
+Kumquats             6.72

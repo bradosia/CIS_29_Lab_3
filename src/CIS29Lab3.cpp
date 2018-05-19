@@ -112,9 +112,9 @@ public:
 	}
 	bool documentStream(istream& streamIn, XMLNode& xmlDoc);
 	bool bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
-			XMLNode* xmlNodeCurrent, stack<string>& documentStack, unsigned int mode);
-	bool nodePop(string& tagString, XMLNode& xmlDoc, XMLNode* xmlNodeCurrent, stack<string>& documentStack);
-	bool nodePush(string& tagString, XMLNode& xmlDoc, XMLNode* xmlNodeCurrent, stack<string>& documentStack);
+			XMLNode*& xmlNodeCurrent, stack<string>& documentStack, unsigned int mode);
+	bool nodePop(string& tagString, XMLNode& xmlDoc, XMLNode*& xmlNodeCurrent, stack<string>& documentStack);
+	bool nodePush(string& tagString, XMLNode& xmlDoc, XMLNode*& xmlNodeCurrent, stack<string>& documentStack);
 };
 
 /**
@@ -397,7 +397,7 @@ bool XMLNode::findChild(string name_, XMLNode*& returnNode,
 	unsigned int findCount, i, n;
 	bool returnValue = false;
 	findCount = 0;
-	n = childNodes.size();
+	n = (unsigned int)childNodes.size();
 	for (i = 0; i < n; i++) {
 		if (childNodes[i]->name == name_) {
 			if (findCount == index) {
@@ -411,12 +411,12 @@ bool XMLNode::findChild(string name_, XMLNode*& returnNode,
 	return returnValue;
 }
 unsigned int XMLNode::childrenSize() {
-	return childNodes.size();
+	return (unsigned int)childNodes.size();
 }
 unsigned int XMLNode::findChildSize(string name_) {
 	unsigned int findCount, i, n;
 	findCount = 0;
-	n = childNodes.size();
+	n = (unsigned int)childNodes.size();
 	for (i = 0; i < n; i++) {
 		if (childNodes[i]->name == name_) {
 			findCount++;
@@ -450,16 +450,17 @@ bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
 	XMLNode* xmlNodeCurrent = &xmlDoc;
 	char bufferInChar[BUFFER_SIZE];
 	streamIn.seekg(0, ios::end); // set the pointer to the end
-	fileSize = streamIn.tellg(); // get the length of the file
+	fileSize = (unsigned int)streamIn.tellg(); // get the length of the file
 	streamIn.seekg(0, ios::beg); // set the pointer to the beginning
 	while (filePos < fileSize) {
 		streamIn.seekg(filePos, ios::beg); // seek new position
 		if (filePos + bufferSize > fileSize) {
 			bufferSize = fileSize - filePos;
+			memset(bufferInChar, 0, sizeof(bufferInChar)); // zero out buffer
 		}
 		memset(bufferInChar, 0, sizeof(bufferInChar)); // zero out buffer
 		streamIn.read(bufferInChar, bufferSize);
-		streamBuffer.append(bufferInChar);
+		streamBuffer.append(bufferInChar, bufferSize);
 		bufferSearch(streamBuffer, xmlDoc, xmlNodeCurrent, documentStack, mode);
 		// advance buffer
 		filePos += bufferSize;
@@ -470,11 +471,11 @@ bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
 }
 
 bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
-		XMLNode* xmlNodeCurrent, stack<string>& documentStack, unsigned int mode) {
+		XMLNode*& xmlNodeCurrent, stack<string>& documentStack, unsigned int mode) {
 	unsigned int ticks = 0;
 	unsigned int tagOpenPos, tagEndPos, noPos;
 	noPos = (unsigned int) string::npos;
-	string tagPop, matchGroupString;
+	string tagPop, matchGroupString, temp;
 	while (ticks < 9999) { // infinite loop protection
 		ticks++;
 		if (mode == 0) {
@@ -484,20 +485,22 @@ bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
 				 * we assume that text before this is the value of current xml node
 				 */
 				mode = 1;
-				tagOpenPos = 0;
 				xmlNodeCurrent->valueAppend(streamBuffer.substr(0, tagOpenPos));
 				streamBuffer.erase(0, tagOpenPos);
+				tagOpenPos = 0;
 			} else {
 				break;
 			}
 		} else if (mode == 1) {
 			// expecting ending angle bracket for a tag
 			tagEndPos = (unsigned int) streamBuffer.find(">");
+			temp = streamBuffer.substr(0, tagEndPos + 1);
+			std::smatch m;
 			if (tagEndPos != noPos) {
 				// let's use regex to grab the tag name between the angled brackets
 				// let's first check if we just ended an ending tag </>
-				std::smatch m;
-				regex_search(streamBuffer, m, tagEndRegex);
+				//std::smatch m;
+				regex_match(temp, m, tagEndRegex);
 				if (!m.empty()) {
 					/* extract matched group
 					 * a .trim() method would be great...
@@ -507,17 +510,23 @@ bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
 					} catch (...) {
 						matchGroupString = "";
 					}
+					string s;
+					s.append("</").append(matchGroupString).append("> ").append(streamBuffer).append("\n");
+					//cout << s;
 					nodePop(matchGroupString, xmlDoc, xmlNodeCurrent, documentStack);
 				} else {
 					// now check if we just ended an opening tag <>
-					std::smatch m;
-					regex_search(streamBuffer, m, tagOpenRegex);
+					//std::smatch m;
+					regex_match(temp, m, tagOpenRegex);
 					if (!m.empty()) {
 						try {
 							matchGroupString = m[1].str(); // match group
 						} catch (...) {
 							matchGroupString = "";
 						}
+						string s;
+						s.append("<").append(matchGroupString).append("> ").append(streamBuffer).append("\n");
+						//cout << s;
 						nodePush(matchGroupString, xmlDoc, xmlNodeCurrent, documentStack);
 					}
 				}
@@ -533,7 +542,7 @@ bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
 }
 
 bool XMLParser::nodePop(string& tagString, XMLNode& xmlDoc,
-		XMLNode* xmlNodeCurrent, stack<string>& documentStack) {
+		XMLNode*& xmlNodeCurrent, stack<string>& documentStack) {
 	/* pop nodes off stack until end tag is found
 	 * can't go higher than the document root
 	 */
@@ -552,7 +561,7 @@ bool XMLParser::nodePop(string& tagString, XMLNode& xmlDoc,
 }
 
 bool XMLParser::nodePush(string& tagString, XMLNode& xmlDoc,
-		XMLNode* xmlNodeCurrent, stack<string>& documentStack) {
+		XMLNode*& xmlNodeCurrent, stack<string>& documentStack) {
 	if (tagString.length() > 0) {
 		documentStack.push(tagString);
 		xmlNodeCurrent = xmlNodeCurrent->addChild(tagString);
@@ -634,7 +643,7 @@ void Code39CharTable::buildCode39IntToCharTable() {
 	/* 2^9 since the longest Code 39 Binary is 9 bits */
 	Code39IntToCharTable.resize(512);
 	// build a binary int to char map
-	n = charIntToCode39IntTable.size();
+	n = (unsigned int)charIntToCode39IntTable.size();
 	for (i = 0; i < n; i++) {
 		if (charIntToCode39IntTable[i]
 				&& (n1 = charIntToCode39IntTable[i]) > 0) {
@@ -748,7 +757,7 @@ void Cart::insert(Product* productPtr) {
 }
 void Cart::calculatePriceTotal() {
 	unsigned int i, n;
-	n = productList.size();
+	n = (unsigned int)productList.size();
 	priceTotal = 0;
 	for (i = 0; i < n; i++) {
 		priceTotal += productList.at(i)->getPrice();
@@ -762,7 +771,7 @@ string Cart::toString() {
 	headString << left << setw(20) << "Product Name" << " Price" << endl;
 	str.append(headString.str());
 	unsigned int i, n;
-	n = productList.size();
+	n = (unsigned int)productList.size();
 	try {
 		for (i = 0; i < n; i++) {
 			str.append(productList[i]->toString()).append("\n");
@@ -966,9 +975,8 @@ int main() {
 		 * because we want to stream the data and decode it as we read.
 		 * This way very large files won't lag or crash the program.
 		 */
-		istream& t = (istream&) fileStreamInProducts;
 		auto parseProductsXMLFuture = async(&XMLParser::documentStream,
-				&xmlparser, ref(t), ref(ProductsXML));
+				&xmlparser, ref((istream&)fileStreamInProducts), ref(ProductsXML));
 		auto parseCartsXMLFuture = async(&XMLParser::documentStream, &xmlparser,
 				ref((istream&) fileStreamInCarts), ref(CartsXML));
 		if (parseProductsXMLFuture.get() && parseCartsXMLFuture.get()) {
@@ -987,6 +995,9 @@ int main() {
 		if (parser.productListXMLNodetoObject(ProductsXML, productTable)) {
 			fh.writeString("productList.txt", productTable.toString());
 			flag = true;
+		}
+		else {
+			cout << "Could not parse the XML node to the product table." << endl;
 		}
 	}
 	// process each cart from the XML file referencing each product from the product table
