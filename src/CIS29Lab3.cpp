@@ -22,6 +22,7 @@
 using namespace std;
 
 #define BUFFER_SIZE 256
+#define CART_PROCESSING_THREADS 7
 
 /**
  @class FileHandler
@@ -112,9 +113,12 @@ public:
 	}
 	bool documentStream(istream& streamIn, XMLNode& xmlDoc);
 	bool bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
-			XMLNode*& xmlNodeCurrent, stack<string>& documentStack, unsigned int mode);
-	bool nodePop(string& tagString, XMLNode& xmlDoc, XMLNode*& xmlNodeCurrent, stack<string>& documentStack);
-	bool nodePush(string& tagString, XMLNode& xmlDoc, XMLNode*& xmlNodeCurrent, stack<string>& documentStack);
+			XMLNode*& xmlNodeCurrent, stack<string>& documentStack,
+			unsigned int mode);
+	bool nodePop(string& tagString, XMLNode& xmlDoc, XMLNode*& xmlNodeCurrent,
+			stack<string>& documentStack);
+	bool nodePush(string& tagString, XMLNode& xmlDoc, XMLNode*& xmlNodeCurrent,
+			stack<string>& documentStack);
 };
 
 /**
@@ -198,6 +202,24 @@ public:
 	}
 	void insert(Cart* cardPtr);
 	string toString();
+};
+
+class CartLane {
+private:
+	XMLNode * nodeXMLCarts;
+	CartList* cartListObject;
+	ProductTable* productTableObject;
+	unsigned int indexStart;
+	unsigned int indexStop;
+public:
+	CartLane() {
+	}
+	~CartLane() {
+	}
+	void init(XMLNode*& nodeXMLCarts_, CartList& cartListObject_,
+			ProductTable& productTableObject_);
+	void range(unsigned int indexStart_, unsigned int indexStop_);
+	bool process();
 };
 
 /**
@@ -397,7 +419,7 @@ bool XMLNode::findChild(string name_, XMLNode*& returnNode,
 	unsigned int findCount, i, n;
 	bool returnValue = false;
 	findCount = 0;
-	n = (unsigned int)childNodes.size();
+	n = (unsigned int) childNodes.size();
 	for (i = 0; i < n; i++) {
 		if (childNodes[i]->name == name_) {
 			if (findCount == index) {
@@ -411,12 +433,12 @@ bool XMLNode::findChild(string name_, XMLNode*& returnNode,
 	return returnValue;
 }
 unsigned int XMLNode::childrenSize() {
-	return (unsigned int)childNodes.size();
+	return (unsigned int) childNodes.size();
 }
 unsigned int XMLNode::findChildSize(string name_) {
 	unsigned int findCount, i, n;
 	findCount = 0;
-	n = (unsigned int)childNodes.size();
+	n = (unsigned int) childNodes.size();
 	for (i = 0; i < n; i++) {
 		if (childNodes[i]->name == name_) {
 			findCount++;
@@ -450,7 +472,7 @@ bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
 	XMLNode* xmlNodeCurrent = &xmlDoc;
 	char bufferInChar[BUFFER_SIZE];
 	streamIn.seekg(0, ios::end); // set the pointer to the end
-	fileSize = (unsigned int)streamIn.tellg(); // get the length of the file
+	fileSize = (unsigned int) streamIn.tellg(); // get the length of the file
 	streamIn.seekg(0, ios::beg); // set the pointer to the beginning
 	while (filePos < fileSize) {
 		streamIn.seekg(filePos, ios::beg); // seek new position
@@ -471,7 +493,8 @@ bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
 }
 
 bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
-		XMLNode*& xmlNodeCurrent, stack<string>& documentStack, unsigned int mode) {
+		XMLNode*& xmlNodeCurrent, stack<string>& documentStack,
+		unsigned int mode) {
 	unsigned int ticks = 0;
 	unsigned int tagOpenPos, tagEndPos, noPos;
 	noPos = (unsigned int) string::npos;
@@ -511,9 +534,11 @@ bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
 						matchGroupString = "";
 					}
 					string s;
-					s.append("</").append(matchGroupString).append("> ").append(streamBuffer).append("\n");
+					s.append("</").append(matchGroupString).append("> ").append(
+							streamBuffer).append("\n");
 					//cout << s;
-					nodePop(matchGroupString, xmlDoc, xmlNodeCurrent, documentStack);
+					nodePop(matchGroupString, xmlDoc, xmlNodeCurrent,
+							documentStack);
 				} else {
 					// now check if we just ended an opening tag <>
 					//std::smatch m;
@@ -525,9 +550,11 @@ bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
 							matchGroupString = "";
 						}
 						string s;
-						s.append("<").append(matchGroupString).append("> ").append(streamBuffer).append("\n");
+						s.append("<").append(matchGroupString).append("> ").append(
+								streamBuffer).append("\n");
 						//cout << s;
-						nodePush(matchGroupString, xmlDoc, xmlNodeCurrent, documentStack);
+						nodePush(matchGroupString, xmlDoc, xmlNodeCurrent,
+								documentStack);
 					}
 				}
 				// erase to the end of the ending angle bracket ">"
@@ -643,7 +670,7 @@ void Code39CharTable::buildCode39IntToCharTable() {
 	/* 2^9 since the longest Code 39 Binary is 9 bits */
 	Code39IntToCharTable.resize(512);
 	// build a binary int to char map
-	n = (unsigned int)charIntToCode39IntTable.size();
+	n = (unsigned int) charIntToCode39IntTable.size();
 	for (i = 0; i < n; i++) {
 		if (charIntToCode39IntTable[i]
 				&& (n1 = charIntToCode39IntTable[i]) > 0) {
@@ -757,7 +784,7 @@ void Cart::insert(Product* productPtr) {
 }
 void Cart::calculatePriceTotal() {
 	unsigned int i, n;
-	n = (unsigned int)productList.size();
+	n = (unsigned int) productList.size();
 	priceTotal = 0;
 	for (i = 0; i < n; i++) {
 		priceTotal += productList.at(i)->getPrice();
@@ -771,7 +798,7 @@ string Cart::toString() {
 	headString << left << setw(20) << "Product Name" << " Price" << endl;
 	str.append(headString.str());
 	unsigned int i, n;
-	n = (unsigned int)productList.size();
+	n = (unsigned int) productList.size();
 	try {
 		for (i = 0; i < n; i++) {
 			str.append(productList[i]->toString()).append("\n");
@@ -804,6 +831,58 @@ string CartList::toString() {
 		//nothing
 	}
 	return str;
+}
+/*
+ * CartLane Implementation
+ */
+void CartLane::init(XMLNode*& nodeXMLCarts_, CartList& cartListObject_,
+		ProductTable& productTableObject_) {
+	nodeXMLCarts = nodeXMLCarts_;
+	cartListObject = &cartListObject_;
+	productTableObject = &productTableObject_;
+}
+void CartLane::range(unsigned int indexStart_, unsigned int indexStop_) {
+	indexStart = indexStart_;
+	indexStop = indexStop_;
+}
+bool CartLane::process() {
+	unsigned int i, n, j, n1, cartNumber;
+	XMLNode *nodeCart, *nodeItem;
+	Cart* cartPtr = NULL;
+	// Assume all children are carts
+	n = indexStop;
+	cout << indexStart << " to " << n << endl;
+	for (i = indexStart; i < n; i++) {
+		nodeCart = nodeXMLCarts->getChild(i);
+		if (nodeCart != nullptr) {
+			/* extract the cart number
+			 * stoi could throw exceptions
+			 */
+			try {
+				cartNumber = (unsigned int) stoi(
+						nodeCart->getName().substr(4,
+								nodeCart->getName().length()));
+			} catch (...) {
+				cartNumber = 0;
+			}
+			cartPtr = new Cart(cartNumber);
+			// Assume all children are items
+			n1 = nodeCart->childrenSize();
+			for (j = 0; j < n1; j++) {
+				nodeItem = nodeCart->getChild(j);
+				if (nodeItem != nullptr) {
+					try {
+						cartPtr->insert(
+								productTableObject->at(nodeItem->getValue()));
+					} catch (...) {
+						//nothing
+					}
+				}
+			}
+		}
+		cartListObject->insert(cartPtr);
+	}
+	return true;
 }
 /*
  * Code39Item Implementation
@@ -896,44 +975,24 @@ bool Parser::productListXMLNodetoObject(XMLNode& productListXMLNode,
 bool Parser::cartListXMLNodetoObject(XMLNode& cartListXMLNode,
 		CartList& cartListObject, ProductTable& productTableObject) {
 	bool returnValue = false;
-	unsigned int i, j, n, n1, cartNumber;
-	XMLNode* nodeXMLCarts, *nodeCart, *nodeItem;
-	Cart* cartPtr = NULL;
+	unsigned int i, n, cartNumber, cartLaneRange;
+	XMLNode* nodeXMLCarts;
 	// XMLCarts level
 	if (cartListXMLNode.findChild("XMLCarts", nodeXMLCarts, 0)) {
 		returnValue = true;
-		// Assume all children are carts
+		// create the lanes
+		CartLane cartLane[CART_PROCESSING_THREADS];
 		n = nodeXMLCarts->childrenSize();
-		for (i = 0; i < n; i++) {
-			nodeCart = nodeXMLCarts->getChild(i);
-			if (nodeCart != nullptr) {
-				/* extract the cart number
-				 * stoi could throw exceptions
-				 */
-				try {
-					cartNumber = (unsigned int) stoi(
-							nodeCart->getName().substr(4,
-									nodeCart->getName().length()));
-				} catch (...) {
-					cartNumber = 0;
-				}
-				cartPtr = new Cart(cartNumber);
-				// Assume all children are items
-				n1 = nodeCart->childrenSize();
-				for (j = 0; j < n1; j++) {
-					nodeItem = nodeCart->getChild(j);
-					if (nodeItem != nullptr) {
-						try {
-							cartPtr->insert(
-									productTableObject.at(
-											nodeItem->getValue()));
-						} catch (...) {
-							//nothing
-						}
-					}
-				}
+		cartLaneRange = n / CART_PROCESSING_THREADS;
+		// distribute carts in lanes
+		for (i = 0; i < CART_PROCESSING_THREADS; i++) {
+			cartLane[i].init(nodeXMLCarts, cartListObject, productTableObject);
+			if (i + 1 == CART_PROCESSING_THREADS) {
+				cartLane[i].range(i * cartLaneRange, n + 1);
+			} else {
+				cartLane[i].range(i * cartLaneRange, (i + 1) * cartLaneRange);
 			}
-			cartListObject.insert(cartPtr);
+			cartLane[i].process();
 		}
 	}
 	return returnValue;
@@ -957,6 +1016,7 @@ int main() {
 	XMLParser xmlparser;
 	string fileNameProducts, fileNameCarts, fileNameCartsList;
 	ifstream fileStreamInProducts, fileStreamInCarts;
+	future<bool> parseProductsXMLFuture, parseCartsXMLFuture;
 	bool flag = false;
 	/* XML input files are here */
 	fileNameProducts = "Products.xml";
@@ -970,38 +1030,41 @@ int main() {
 			|| !fh.readStream(fileNameCarts, fileStreamInCarts)) {
 		cout << "Could not read either of the input files." << endl;
 	} else {
-		cout << "Reading file..." << endl;
+		cout << "Parsing XML files..." << endl;
 		/* we pass file streams instead of a string to this method
 		 * because we want to stream the data and decode it as we read.
 		 * This way very large files won't lag or crash the program.
 		 */
-		auto parseProductsXMLFuture = async(&XMLParser::documentStream,
-				&xmlparser, ref((istream&)fileStreamInProducts), ref(ProductsXML));
-		auto parseCartsXMLFuture = async(&XMLParser::documentStream, &xmlparser,
+		parseProductsXMLFuture = async(&XMLParser::documentStream, &xmlparser,
+				ref((istream&) fileStreamInProducts), ref(ProductsXML));
+		parseCartsXMLFuture = async(&XMLParser::documentStream, &xmlparser,
 				ref((istream&) fileStreamInCarts), ref(CartsXML));
-		if (parseProductsXMLFuture.get() && parseCartsXMLFuture.get()) {
-			cout << "XML Files successfully parsed!" << endl;
-			flag = true;
-		} else {
-			cout << "XML Files could not be parsed." << endl;
-		}
-		// close the XML files
-		fh.close(fileStreamInProducts);
-		fh.close(fileStreamInCarts);
-	}
-	// create the product table from the product list XML
-	if (flag) {
-		flag = false;
-		if (parser.productListXMLNodetoObject(ProductsXML, productTable)) {
-			fh.writeString("productList.txt", productTable.toString());
-			flag = true;
-		}
-		else {
-			cout << "Could not parse the XML node to the product table." << endl;
+		if (parseProductsXMLFuture.get()) {
+			cout
+					<< "Successfully parsed Product List XML File to Product List Nodes."
+					<< endl;
+			// create the product table from the product list XML
+			if (parser.productListXMLNodetoObject(ProductsXML, productTable)) {
+				//fh.writeString("productList.txt", productTable.toString());
+				cout
+						<< "Successfully parsed Product List XML Nodes into hash table."
+						<< endl;
+				flag = true;
+			} else {
+				cout
+						<< "Failed to parse Product List XML Nodes into hash table."
+						<< endl;
+			}
 		}
 	}
 	// process each cart from the XML file referencing each product from the product table
-	if (flag) {
+	if (flag && parseCartsXMLFuture.get()) {
+		cout << "Successfully parsed Cart List XML file into cart list nodes."
+				<< endl << "Processing Carts..." << endl;
+		// close the XML files
+		fh.close(fileStreamInProducts);
+		fh.close(fileStreamInCarts);
+		//cout << "XML Files successfully parsed!" << endl;
 		if (parser.cartListXMLNodetoObject(CartsXML, cartList, productTable)) {
 			if (fh.writeString(fileNameCartsList, cartList.toString())) {
 				cout << "Carts list written to \"" << fileNameCartsList << "\""

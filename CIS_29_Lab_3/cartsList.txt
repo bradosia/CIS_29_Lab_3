@@ -18882,3 +18882,24 @@ Linguini             15.21
 Total Price          186.86
 ------------------------------
 
+Cart #36
+Product Name         Price
+Mushrooms            5.01
+Beets                18.30
+Rutabagas            13.36
+Hash browns          13.68
+Blue berries         19.78
+Bacon                1.68
+Spinach              19.17
+Bar soap             12.72
+Flour                7.57
+Shrimp               17.92
+All spice            4.14
+Pork chops           2.13
+Salmon               16.39
+Facial tissue        19.80
+Linguini             15.21
+------------------------------
+Total Price          186.86
+------------------------------
+
