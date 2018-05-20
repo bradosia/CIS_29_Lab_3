@@ -109,7 +109,7 @@ public:
  */
 class XMLParser {
 private:
-	std::regex tagOpenRegex, tagEndRegex;
+	regex tagOpenRegex, tagEndRegex;
 public:
 	XMLParser();
 	~XMLParser() {

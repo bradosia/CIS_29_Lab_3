@@ -4,8 +4,8 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>423</x>
-      <y>72</y>
+      <x>738</x>
+      <y>0</y>
       <w>702</w>
       <h>108</h>
     </coordinates>
@@ -22,8 +22,8 @@ bool cartListXMLNodetoObject(XMLNode&amp; cartListXMLNode, CartList&amp; cartLis
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>495</x>
-      <y>207</y>
+      <x>621</x>
+      <y>135</y>
       <w>351</w>
       <h>153</h>
     </coordinates>
@@ -43,8 +43,8 @@ string toString()</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>828</x>
-      <y>702</y>
+      <x>1332</x>
+      <y>558</y>
       <w>324</w>
       <h>144</h>
     </coordinates>
@@ -63,30 +63,19 @@ bool charToInt(char charIn, unsigned int&amp; intOut)</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>801</x>
-      <y>351</y>
-      <w>72</w>
-      <h>171</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>60.0;170.0;10.0;10.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>675</x>
-      <y>351</y>
+      <x>891</x>
+      <y>279</y>
       <w>27</w>
-      <h>63</h>
+      <h>225</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>10.0;50.0;10.0;10.0</additional_attributes>
+    <additional_attributes>10.0;230.0;10.0;10.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>0</x>
-      <y>99</y>
+      <x>171</x>
+      <y>135</y>
       <w>351</w>
       <h>126</h>
     </coordinates>
@@ -104,22 +93,22 @@ bool close(ifstream&amp; fileStream)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>135</x>
-      <y>0</y>
-      <w>243</w>
+      <x>207</x>
+      <y>18</y>
+      <w>324</w>
       <h>72</h>
     </coordinates>
     <panel_attributes>UML Diagram
-Lab 2 - Containers and Regex
-Code3of9 Symbology in XML Container
+Lab 3 - Threading
+Code39 Symbology in XML Container with threading
 By: Branden Lee</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>450</x>
-      <y>576</y>
+      <x>567</x>
+      <y>648</y>
       <w>351</w>
       <h>144</h>
     </coordinates>
@@ -142,8 +131,8 @@ unsigned int size()</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>0</x>
-      <y>405</y>
+      <x>99</x>
+      <y>513</y>
       <w>432</w>
       <h>279</h>
     </coordinates>
@@ -172,27 +161,28 @@ unsigned int findChildSize(string name_)</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>0</x>
-      <y>243</y>
-      <w>432</w>
-      <h>135</h>
+      <y>315</y>
+      <w>810</w>
+      <h>153</h>
     </coordinates>
     <panel_attributes>XMLParser
 --
-unsigned int fileSize
-unsigned int filePos
-char bufferInChar[2]
-string streamBuffer
+regex tagOpenRegex
+regex tagEndRegex
 --
 XMLParser()
 ~XMLParser()
-bool documentStream(istream&amp; streamIn, XMLNode&amp; xmlDoc)</panel_attributes>
+bool documentStream(istream&amp; streamIn, XMLNode&amp; xmlDoc)
+bool bufferSearch(string&amp; streamBuffer, XMLNode&amp; xmlDoc, XMLNode*&amp; xmlNodeCurrent, stack&lt;string&gt;&amp; documentStack, unsigned int mode)
+bool nodePop(string&amp; tagString, XMLNode&amp; xmlDoc, XMLNode*&amp; xmlNodeCurrent, stack&lt;string&gt;&amp; documentStack)
+bool nodePush(string&amp; tagString, XMLNode&amp; xmlDoc, XMLNode*&amp; xmlNodeCurrent, stack&lt;string&gt;&amp; documentStack)</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>585</x>
-      <y>396</y>
+      <x>864</x>
+      <y>486</y>
       <w>216</w>
       <h>153</h>
     </coordinates>
@@ -210,21 +200,10 @@ string toString()</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>522</x>
-      <y>351</y>
-      <w>27</w>
-      <h>243</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>10.0;250.0;10.0;10.0</additional_attributes>
-  </element>
-  <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>828</x>
-      <y>504</y>
+      <x>1332</x>
+      <y>351</y>
       <w>324</w>
       <h>171</h>
     </coordinates>
@@ -245,8 +224,8 @@ bool toBinaryString(string&amp; code39CharItem)</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>882</x>
-      <y>207</y>
+      <x>1116</x>
+      <y>351</y>
       <w>171</w>
       <h>108</h>
     </coordinates>
@@ -263,8 +242,8 @@ string toString()</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>873</x>
-      <y>342</y>
+      <x>1107</x>
+      <y>486</y>
       <w>198</w>
       <h>144</h>
     </coordinates>
@@ -283,19 +262,19 @@ string toString()</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>792</x>
-      <y>423</y>
-      <w>99</w>
+      <x>1071</x>
+      <y>576</y>
+      <w>54</w>
       <h>27</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>10.0;10.0;90.0;10.0</additional_attributes>
+    <additional_attributes>10.0;10.0;40.0;10.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>963</x>
-      <y>306</y>
+      <x>1197</x>
+      <y>450</y>
       <w>27</w>
       <h>54</h>
     </coordinates>
@@ -305,8 +284,19 @@ string toString()</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>216</x>
-      <y>369</y>
+      <x>315</x>
+      <y>459</y>
+      <w>27</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;60.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>864</x>
+      <y>99</y>
       <w>27</w>
       <h>54</h>
     </coordinates>
@@ -316,8 +306,8 @@ string toString()</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>657</x>
-      <y>171</y>
+      <x>1098</x>
+      <y>99</y>
       <w>27</w>
       <h>54</h>
     </coordinates>
@@ -327,34 +317,46 @@ string toString()</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>963</x>
-      <y>171</y>
+      <x>1494</x>
+      <y>513</y>
+      <w>27</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;50.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1008</x>
+      <y>135</y>
+      <w>585</w>
+      <h>189</h>
+    </coordinates>
+    <panel_attributes>CartLane
+--
+XMLNode* nodeXMLCarts
+CartList* cartListObject
+ProductTable* productTableObject
+unsigned int indexStart
+unsigned int indexStop
+--
+CartLane()
+~CartLane()
+void init(XMLNode*&amp; nodeXMLCarts_, CartList&amp; cartListObject_, ProductTable&amp; productTableObject_)
+void range(unsigned int indexStart_, unsigned int indexStop_)
+bool process()</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1197</x>
+      <y>315</y>
       <w>27</w>
       <h>54</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
     <additional_attributes>10.0;40.0;10.0;10.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>990</x>
-      <y>666</y>
-      <w>27</w>
-      <h>54</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>10.0;40.0;10.0;10.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>423</x>
-      <y>171</y>
-      <w>81</w>
-      <h>306</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>10.0;320.0;70.0;10.0</additional_attributes>
   </element>
 </diagram>
