@@ -19,10 +19,13 @@
 #include <cstring>
 #include <thread>
 #include <future>
+#include <mutex>          // std::mutex
 using namespace std;
 
 #define BUFFER_SIZE 256
 #define CART_PROCESSING_THREADS 7
+
+mutex mutexGlobal;           // mutex for critical section
 
 /**
  @class FileHandler
@@ -213,6 +216,10 @@ private:
 	unsigned int indexStop;
 public:
 	CartLane() {
+		nodeXMLCarts = NULL;
+		cartListObject = NULL;
+		productTableObject = NULL;
+		indexStart = indexStop = 0;
 	}
 	~CartLane() {
 	}
@@ -880,7 +887,9 @@ bool CartLane::process() {
 				}
 			}
 		}
+		mutexGlobal.lock();
 		cartListObject->insert(cartPtr);
+		mutexGlobal.unlock();
 	}
 	return true;
 }
@@ -977,6 +986,7 @@ bool Parser::cartListXMLNodetoObject(XMLNode& cartListXMLNode,
 	bool returnValue = false;
 	unsigned int i, n, cartNumber, cartLaneRange;
 	XMLNode* nodeXMLCarts;
+	vector<thread*> threadList;
 	// XMLCarts level
 	if (cartListXMLNode.findChild("XMLCarts", nodeXMLCarts, 0)) {
 		returnValue = true;
@@ -992,7 +1002,13 @@ bool Parser::cartListXMLNodetoObject(XMLNode& cartListXMLNode,
 			} else {
 				cartLane[i].range(i * cartLaneRange, (i + 1) * cartLaneRange);
 			}
-			cartLane[i].process();
+			// cartLane[i].process();
+			threadList.push_back(new thread(&CartLane::process, &cartLane[i]));
+		}
+		// block threads
+		n = threadList.size();
+		for (i = 0; i < n; i++) {
+			threadList[i]->join();
 		}
 	}
 	return returnValue;
