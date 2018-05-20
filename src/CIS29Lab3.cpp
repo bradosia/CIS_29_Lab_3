@@ -209,7 +209,7 @@ public:
 
 class CartLane {
 private:
-	XMLNode * nodeXMLCarts;
+	XMLNode* nodeXMLCarts;
 	CartList* cartListObject;
 	ProductTable* productTableObject;
 	unsigned int indexStart;
