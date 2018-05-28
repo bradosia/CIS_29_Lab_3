@@ -207,6 +207,12 @@ public:
 	string toString();
 };
 
+/**
+ * @class CartLane
+ * A range of carts are stored in each lane container. An external method will set
+ * the range of cart numbers to be assigned to each lane. Lanes are designed so that they
+ * are independent of each other. A lane may finish processing all carts before the others leaving it empty.
+ **/
 class CartLane {
 private:
 	XMLNode* nodeXMLCarts;
@@ -858,7 +864,6 @@ bool CartLane::process() {
 	Cart* cartPtr = NULL;
 	// Assume all children are carts
 	n = indexStop;
-	cout << indexStart << " to " << n << endl;
 	for (i = indexStart; i < n; i++) {
 		nodeCart = nodeXMLCarts->getChild(i);
 		if (nodeCart != nullptr) {
