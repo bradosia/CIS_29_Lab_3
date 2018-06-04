@@ -1,13 +1,4 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(376,5): warning MSB8004: Intermediate Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Intermediate Directory.
 C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(377,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
   CIS29Lab3.cpp
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(832): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(905): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(916): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(1009): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(987): warning C4101: 'cartNumber': unreferenced local variable
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(372): warning C4267: 'return': conversion from 'size_t' to 'unsigned int', possible loss of data
-  c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(371): note: while compiling class template member function 'unsigned int HashTable<std::string,Product *>::size(void)'
-  c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(767): note: see reference to function template instantiation 'unsigned int HashTable<std::string,Product *>::size(void)' being compiled
-  c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(160): note: see reference to class template instantiation 'HashTable<std::string,Product *>' being compiled
-  CIS_29_Lab_3.vcxproj -> C:\Users\admin\Documents\GitHub\CIS_29_Lab_3\x64\CIS_29_Lab_3.exe
+  CIS_29_Lab_3.vcxproj -> C:\github\CIS_29_Lab_3\x64\CIS_29_Lab_3.exe

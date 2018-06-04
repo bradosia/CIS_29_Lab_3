@@ -5,12 +5,24 @@
 // Description : Decoding Code3of9 Symbology in XML files with threads
 //============================================================================
 
+/* 2018-06-04 Revision 2
+ * 2018-06-03: The professor gave the comment:
+ * I ran your code three times, and got the same output. This means your carts are not being processed asynchronously.
+ * Fix for more points.
+ *
+ * In response to this, I want to point out that output file "cartsList.txt" DID CHANGE each time the program was run.
+ * Maybe it was not evident in the beginning of the file, but toward the end of the file the output would differ after each run
+ *
+ * Despite this, In this revision I have added smart pointers for the sake of learning and changed the cart processing algorithm
+ * a bit to make the output results differ a lot more than previously after each run.
+ * */
+
 #include <string>
 #include <fstream>
-#include <iostream>     // std::cout
+#include <iostream>		// std::cout
 #include <sstream>
 #include <iomanip>
-#include <vector>       // std::vector
+#include <vector>		// std::vector
 #include <bitset>
 #include <list>
 #include <regex>
@@ -19,13 +31,15 @@
 #include <cstring>
 #include <thread>
 #include <future>
-#include <mutex>          // std::mutex
+#include <mutex>		// std::mutex
+#include <memory>		// std::shared_ptr
 using namespace std;
 
 #define BUFFER_SIZE 256
+// Usually the same as the processor cores (4 recommended)
 #define CART_PROCESSING_THREADS 7
 
-mutex mutexGlobal;           // mutex for critical section
+mutex mutexGlobal;		// mutex for critical section
 
 /**
  @class FileHandler
@@ -82,23 +96,29 @@ class XMLNode {
 private:
 	string name; // tag name inside the angled brackets <name>
 	string value; // non-child-node inside node <>value</>
-	vector<XMLNode*> childNodes;
-	XMLNode* parentNode;
+	vector<shared_ptr<XMLNode>> childNodes;
+	/* 2018-06-04 Revision 2
+	 * XMLNode.parentNode was removed because it could lead to circular references
+	 * */
 public:
 	XMLNode();
-	XMLNode(string name_, XMLNode* parentNode_);
-	~XMLNode() {
-	}
+	XMLNode(string name_);
+	/* 2018-06-04 Revision 2
+	 * destructor removed. smart pointers will do this.
+	 * */
 	void valueAppend(string str);
 	/* not a comprehensive list of definitions for all getters/setters
 	 * it is not vital to the program to have all setters
 	 */
 	string getName();
 	string getValue();
-	XMLNode* getParent();
-	XMLNode* addChild(string str);
-	XMLNode* getChild(unsigned int index);
-	bool findChild(string name_, XMLNode*& returnNode, unsigned int index);
+	/* 2018-06-04 Revision 2
+	 * XMLNode.getParent() was removed because it could lead to circular references
+	 * */
+	shared_ptr<XMLNode> addChild(string str);
+	shared_ptr<XMLNode> getChild(unsigned int index);
+	bool findChild(string name_, shared_ptr<XMLNode>& returnNode,
+			unsigned int index);
 	unsigned int childrenSize();
 	unsigned int findChildSize(string name_);
 };
@@ -112,16 +132,16 @@ private:
 	regex tagOpenRegex, tagEndRegex;
 public:
 	XMLParser();
-	~XMLParser() {
-	}
-	bool documentStream(istream& streamIn, XMLNode& xmlDoc);
-	bool bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
-			XMLNode*& xmlNodeCurrent, stack<string>& documentStack,
-			unsigned int mode);
-	bool nodePop(string& tagString, XMLNode& xmlDoc, XMLNode*& xmlNodeCurrent,
-			stack<string>& documentStack);
-	bool nodePush(string& tagString, XMLNode& xmlDoc, XMLNode*& xmlNodeCurrent,
-			stack<string>& documentStack);
+	/* 2018-06-04 Revision 2
+	 * destructor removed. smart pointers will do this.
+	 * */
+	bool documentStream(istream& streamIn, shared_ptr<XMLNode> xmlDoc);
+	bool bufferSearch(string& streamBuffer, shared_ptr<XMLNode> xmlNodeCurrent,
+			stack<shared_ptr<XMLNode>>& documentStack, unsigned int& mode);
+	bool nodePop(string& tagString, shared_ptr<XMLNode> xmlNodeCurrent,
+			stack<shared_ptr<XMLNode>>& documentStack);
+	bool nodePush(string& tagString, shared_ptr<XMLNode> xmlNodeCurrent,
+			stack<shared_ptr<XMLNode>>& documentStack);
 };
 
 /**
@@ -156,8 +176,8 @@ public:
 
 class ProductTable {
 private:
-	Code39CharTable code39CharTable;
-	HashTable<string, Product*> code39ItemToProductTable;
+	shared_ptr<Code39CharTable> code39CharTable;
+	HashTable<string, shared_ptr<Product>> code39ItemToProductTable;
 public:
 	ProductTable();
 	~ProductTable() {
@@ -166,23 +186,23 @@ public:
 	 * @param key The code39 Binary String of first 5 characters of product name
 	 * @param val pointer to the product
 	 */
-	bool insert(string key, Product* val);
+	bool insert(string key, shared_ptr<Product> val);
 	/*
 	 * Generates the key automatically
 	 * @param val pointer to the product
 	 */
-	bool insert(Product* val);
+	bool insert(shared_ptr<Product> val);
 	/*
 	 * WARNING: could throw an exception
 	 */
-	Product* at(string key);
+	shared_ptr<Product> at(string key);
 	string toString();
 
 };
 
 class Cart {
 private:
-	vector<Product*> productList;
+	vector<shared_ptr<Product>> productList;
 	unsigned int cartNumber;
 	double priceTotal;
 public:
@@ -190,20 +210,20 @@ public:
 	Cart(unsigned int cartNumber_);
 	~Cart() {
 	}
-	void insert(Product* productPtr);
+	void insert(shared_ptr<Product> productPtr);
 	void calculatePriceTotal();
 	string toString();
 };
 
 class CartList {
 private:
-	vector<Cart*> cartList;
+	vector<shared_ptr<Cart>> cartList;
 public:
 	CartList() {
 	}
 	~CartList() {
 	}
-	void insert(Cart* cardPtr);
+	void insert(shared_ptr<Cart> cartPtr);
 	string toString();
 };
 
@@ -215,23 +235,17 @@ public:
  **/
 class CartLane {
 private:
-	XMLNode* nodeXMLCarts;
-	CartList* cartListObject;
-	ProductTable* productTableObject;
-	unsigned int indexStart;
-	unsigned int indexStop;
+	shared_ptr<queue<shared_ptr<XMLNode>>> cartXMLNodeQueuePtr;
+	shared_ptr<CartList> cartListPtr;
+	shared_ptr<ProductTable> productTablePtr;
 public:
 	CartLane() {
-		nodeXMLCarts = NULL;
-		cartListObject = NULL;
-		productTableObject = NULL;
-		indexStart = indexStop = 0;
 	}
 	~CartLane() {
 	}
-	void init(XMLNode*& nodeXMLCarts_, CartList& cartListObject_,
-			ProductTable& productTableObject_);
-	void range(unsigned int indexStart_, unsigned int indexStop_);
+	void init(shared_ptr<queue<shared_ptr<XMLNode>>> cartXMLNodeQueuePtr_,
+			shared_ptr<CartList> cartListPtr_,
+			shared_ptr<ProductTable> productTablePtr_);
 	bool process();
 };
 
@@ -241,11 +255,11 @@ public:
  */
 class Code39Item {
 private:
-	Code39CharTable * code39CharTable;
+	shared_ptr<Code39CharTable> code39CharTable;
 	string binaryString, codeString;
 	queue<int> intQueue;
 public:
-	Code39Item(Code39CharTable* code39CharTablePtr);
+	Code39Item(shared_ptr<Code39CharTable> code39CharTablePtr);
 	~Code39Item() {
 	}
 	void setBinaryString(string binaryString_);
@@ -263,10 +277,11 @@ public:
 	Parser();
 	~Parser() {
 	}
-	bool productListXMLNodetoObject(XMLNode& productListXMLNode,
-			ProductTable& productTableObject);
-	bool cartListXMLNodetoObject(XMLNode& cartListXMLNode,
-			CartList& cartListObject, ProductTable& productTableObject);
+	bool productListXMLNodetoObject(shared_ptr<XMLNode> productListXMLNodePtr,
+			shared_ptr<ProductTable> productTablePtr);
+	bool cartListXMLNodetoObject(shared_ptr<XMLNode> cartListXMLNodePtr,
+			shared_ptr<CartList> cartListPtr,
+			shared_ptr<ProductTable> productTablePtr);
 };
 
 /*
@@ -375,7 +390,7 @@ unsigned int HashTable<K, T>::hash(unsigned int key) {
 }
 template<class K, class T>
 unsigned int HashTable<K, T>::size() {
-	return table.size();
+	return static_cast<unsigned int>(table.size());
 }
 
 template<class K, class T>
@@ -394,12 +409,10 @@ bool HashTable<K, T>::resize(unsigned int key) {
 XMLNode::XMLNode() {
 	name = "";
 	value = "";
-	parentNode = nullptr;
 }
-XMLNode::XMLNode(string name_, XMLNode* parentNode_) {
+XMLNode::XMLNode(string name_) {
 	name = name_;
 	value = "";
-	parentNode = parentNode_;
 }
 void XMLNode::valueAppend(string str) {
 	value.append(str);
@@ -410,16 +423,13 @@ string XMLNode::getName() {
 string XMLNode::getValue() {
 	return value;
 }
-XMLNode* XMLNode::getParent() {
-	return parentNode;
-}
-XMLNode* XMLNode::addChild(string str) {
-	XMLNode* childNode = new XMLNode(str, this);
+shared_ptr<XMLNode> XMLNode::addChild(string str) {
+	shared_ptr<XMLNode> childNode = make_shared<XMLNode>(str);
 	childNodes.push_back(childNode);
 	return childNode;
 }
-XMLNode* XMLNode::getChild(unsigned int index) {
-	XMLNode* nodeReturn = nullptr;
+shared_ptr<XMLNode> XMLNode::getChild(unsigned int index) {
+	shared_ptr<XMLNode> nodeReturn;
 	try {
 		nodeReturn = childNodes.at(index);
 	} catch (...) {
@@ -427,7 +437,7 @@ XMLNode* XMLNode::getChild(unsigned int index) {
 	}
 	return nodeReturn;
 }
-bool XMLNode::findChild(string name_, XMLNode*& returnNode,
+bool XMLNode::findChild(string name_, shared_ptr<XMLNode>& returnNode,
 		unsigned int index) {
 	unsigned int findCount, i, n;
 	bool returnValue = false;
@@ -467,7 +477,7 @@ XMLParser::XMLParser() {
 	tagOpenRegex = regex("\\<(.*?)\\>");   // matches an opening tag <tag>
 	tagEndRegex = regex("\\<\\/(.*?)\\>");   // matches an ending tag </tag>
 }
-bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
+bool XMLParser::documentStream(istream& streamIn, shared_ptr<XMLNode> xmlDoc) {
 	/* Parsing Steps:
 	 * 1. create document node. If stack is empty then document node is the parent.
 	 * 2. grab first <tag> and add push on stack.
@@ -478,11 +488,16 @@ bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
 	 * */
 	unsigned int fileSize, filePos, bufferSize, mode;
 	string streamBuffer;
-	stack<string> documentStack;
+	stack<shared_ptr<XMLNode>> documentStack;
+	/* 2018-06-04 Revision 2
+	 * bottom of the stack is the document node.
+	 * */
+	//xmlDoc = make_shared<XMLNode>("Root");
+	documentStack.push(xmlDoc);
 	bufferSize = BUFFER_SIZE;
 	fileSize = filePos = mode = 0;
 	streamBuffer = "";
-	XMLNode* xmlNodeCurrent = &xmlDoc;
+	shared_ptr<XMLNode> xmlNodeCurrent = xmlDoc;
 	char bufferInChar[BUFFER_SIZE];
 	streamIn.seekg(0, ios::end); // set the pointer to the end
 	fileSize = (unsigned int) streamIn.tellg(); // get the length of the file
@@ -496,7 +511,7 @@ bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
 		memset(bufferInChar, 0, sizeof(bufferInChar)); // zero out buffer
 		streamIn.read(bufferInChar, bufferSize);
 		streamBuffer.append(bufferInChar, bufferSize);
-		bufferSearch(streamBuffer, xmlDoc, xmlNodeCurrent, documentStack, mode);
+		bufferSearch(streamBuffer, xmlNodeCurrent, documentStack, mode);
 		// advance buffer
 		filePos += bufferSize;
 	}
@@ -505,9 +520,9 @@ bool XMLParser::documentStream(istream& streamIn, XMLNode& xmlDoc) {
 	return true;
 }
 
-bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
-		XMLNode*& xmlNodeCurrent, stack<string>& documentStack,
-		unsigned int mode) {
+bool XMLParser::bufferSearch(string& streamBuffer,
+		shared_ptr<XMLNode> xmlNodeCurrent,
+		stack<shared_ptr<XMLNode>>& documentStack, unsigned int& mode) {
 	unsigned int ticks = 0;
 	unsigned int tagOpenPos, tagEndPos, noPos;
 	noPos = (unsigned int) string::npos;
@@ -550,8 +565,7 @@ bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
 					s.append("</").append(matchGroupString).append("> ").append(
 							streamBuffer).append("\n");
 					//cout << s;
-					nodePop(matchGroupString, xmlDoc, xmlNodeCurrent,
-							documentStack);
+					nodePop(matchGroupString, xmlNodeCurrent, documentStack);
 				} else {
 					// now check if we just ended an opening tag <>
 					//std::smatch m;
@@ -566,7 +580,7 @@ bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
 						s.append("<").append(matchGroupString).append("> ").append(
 								streamBuffer).append("\n");
 						//cout << s;
-						nodePush(matchGroupString, xmlDoc, xmlNodeCurrent,
+						nodePush(matchGroupString, xmlNodeCurrent,
 								documentStack);
 					}
 				}
@@ -581,33 +595,33 @@ bool XMLParser::bufferSearch(string& streamBuffer, XMLNode& xmlDoc,
 	return true;
 }
 
-bool XMLParser::nodePop(string& tagString, XMLNode& xmlDoc,
-		XMLNode*& xmlNodeCurrent, stack<string>& documentStack) {
+bool XMLParser::nodePop(string& tagString, shared_ptr<XMLNode> xmlNodeCurrent,
+		stack<shared_ptr<XMLNode>>& documentStack) {
 	/* pop nodes off stack until end tag is found
-	 * can't go higher than the document root
+	 * can't go lower than the document root
 	 */
 	string tagPop = "";
 	if (tagString.length() > 0) {
-		while (!documentStack.empty() && tagPop != tagString) {
-			tagPop = documentStack.top();
+		/* 2018-06-04 Revision 2
+		 * bottom of the stack is the document node. These reduces number of arguments passed.
+		 * */
+		while (documentStack.size() > 1 && tagPop != tagString) {
+			tagPop = documentStack.top()->getName();
 			documentStack.pop();
-			xmlNodeCurrent = xmlNodeCurrent->getParent();
-			if (xmlNodeCurrent == nullptr) {
-				xmlNodeCurrent = &xmlDoc;
-			}
+			/* 2018-06-04 Revision 2
+			 * XMLNode.getParent() was removed because it could lead to circular references
+			 * */
+			xmlNodeCurrent = documentStack.top();
 		}
 	}
 	return true;
 }
 
-bool XMLParser::nodePush(string& tagString, XMLNode& xmlDoc,
-		XMLNode*& xmlNodeCurrent, stack<string>& documentStack) {
+bool XMLParser::nodePush(string& tagString, shared_ptr<XMLNode> xmlNodeCurrent,
+		stack<shared_ptr<XMLNode>>& documentStack) {
 	if (tagString.length() > 0) {
-		documentStack.push(tagString);
 		xmlNodeCurrent = xmlNodeCurrent->addChild(tagString);
-		if (xmlNodeCurrent == nullptr) {
-			xmlNodeCurrent = &xmlDoc;
-		}
+		documentStack.push(xmlNodeCurrent);
 	}
 	return true;
 }
@@ -743,14 +757,15 @@ string Product::toString() {
  * ProductTable Implementation
  */
 ProductTable::ProductTable() {
+	code39CharTable = make_shared<Code39CharTable>();
 	code39ItemToProductTable.resize(1700);
 }
-bool ProductTable::insert(string key, Product* val) {
+bool ProductTable::insert(string key, shared_ptr<Product> val) {
 	return code39ItemToProductTable.insert(key, val);
 }
-bool ProductTable::insert(Product* val) {
+bool ProductTable::insert(shared_ptr<Product> val) {
 	bool returnValue = false;
-	Code39Item code39Item(&code39CharTable);
+	Code39Item code39Item(code39CharTable);
 	code39Item.setCodeString(val->getName().substr(0, 5));
 	string code39BinaryString;
 	if (code39Item.toBinaryString(code39BinaryString)) {
@@ -760,7 +775,7 @@ bool ProductTable::insert(Product* val) {
 	}
 	return returnValue;
 }
-Product* ProductTable::at(string key) {
+shared_ptr<Product> ProductTable::at(string key) {
 	return code39ItemToProductTable.at(key);
 }
 string ProductTable::toString() {
@@ -770,7 +785,7 @@ string ProductTable::toString() {
 	headString << left << setw(20) << "Product Name" << " Price" << endl;
 	str.append(headString.str());
 	unsigned int i, n;
-	n = code39ItemToProductTable.size();
+	n = static_cast<unsigned int>(code39ItemToProductTable.size());
 	for (i = 0; i < n; i++) {
 		try {
 			str.append(code39ItemToProductTable.atIndex(i)->toString()).append(
@@ -792,7 +807,7 @@ Cart::Cart(unsigned int cartNumber_) {
 	cartNumber = cartNumber_;
 	priceTotal = 0;
 }
-void Cart::insert(Product* productPtr) {
+void Cart::insert(shared_ptr<Product> productPtr) {
 	productList.push_back(productPtr);
 }
 void Cart::calculatePriceTotal() {
@@ -828,14 +843,14 @@ string Cart::toString() {
 /*
  * CartList Implementation
  */
-void CartList::insert(Cart* cartPtr) {
+void CartList::insert(shared_ptr<Cart> cartPtr) {
 	cartList.push_back(cartPtr);
 }
 string CartList::toString() {
 	string str = "";
 	str.append(" Cart List \n-----------\n");
 	unsigned int i, n;
-	n = cartList.size();
+	n = static_cast<unsigned int>(cartList.size());
 	try {
 		for (i = 0; i < n; i++) {
 			str.append(cartList[i]->toString()).append("\n\n");
@@ -848,52 +863,48 @@ string CartList::toString() {
 /*
  * CartLane Implementation
  */
-void CartLane::init(XMLNode*& nodeXMLCarts_, CartList& cartListObject_,
-		ProductTable& productTableObject_) {
-	nodeXMLCarts = nodeXMLCarts_;
-	cartListObject = &cartListObject_;
-	productTableObject = &productTableObject_;
-}
-void CartLane::range(unsigned int indexStart_, unsigned int indexStop_) {
-	indexStart = indexStart_;
-	indexStop = indexStop_;
+void CartLane::init(shared_ptr<queue<shared_ptr<XMLNode>>> cartXMLNodeQueuePtr_,
+		shared_ptr<CartList> cartListPtr_,
+		shared_ptr<ProductTable> productTablePtr_) {
+	cartXMLNodeQueuePtr = cartXMLNodeQueuePtr_;
+	cartListPtr = cartListPtr_;
+	productTablePtr = productTablePtr_;
 }
 bool CartLane::process() {
-	unsigned int i, n, j, n1, cartNumber;
-	XMLNode *nodeCart, *nodeItem;
-	Cart* cartPtr = NULL;
-	// Assume all children are carts
-	n = indexStop;
-	for (i = indexStart; i < n; i++) {
-		nodeCart = nodeXMLCarts->getChild(i);
-		if (nodeCart != nullptr) {
-			/* extract the cart number
-			 * stoi could throw exceptions
-			 */
-			try {
-				cartNumber = (unsigned int) stoi(
-						nodeCart->getName().substr(4,
-								nodeCart->getName().length()));
-			} catch (...) {
-				cartNumber = 0;
-			}
-			cartPtr = new Cart(cartNumber);
-			// Assume all children are items
-			n1 = nodeCart->childrenSize();
-			for (j = 0; j < n1; j++) {
-				nodeItem = nodeCart->getChild(j);
-				if (nodeItem != nullptr) {
-					try {
-						cartPtr->insert(
-								productTableObject->at(nodeItem->getValue()));
-					} catch (...) {
-						//nothing
-					}
+	unsigned int i, n, cartNumber;
+	shared_ptr<XMLNode> cartNodePtr, itemNodePtr;
+	shared_ptr<Cart> cartPtr;
+	/* keep processing cart XML nodes from the queue until
+	 * the queue is empty */
+	while (!cartXMLNodeQueuePtr->empty()) {
+		cartNodePtr = cartXMLNodeQueuePtr->front();
+		/* extract the cart number
+		 * stoi could throw exceptions
+		 */
+		try {
+			cartNumber = static_cast<unsigned int>(stoi(
+					cartNodePtr->getName().substr(4,
+							cartNodePtr->getName().length())));
+		} catch (...) {
+			cartNumber = 0;
+		}
+		shared_ptr<Cart> cartPtr = make_shared<Cart>(cartNumber);
+		// Assume all children are items
+		n = cartNodePtr->childrenSize();
+		for (i = 0; i < n; i++) {
+			itemNodePtr = cartNodePtr->getChild(i);
+			if (itemNodePtr != nullptr) {
+				try {
+					cartPtr->insert(
+							productTablePtr->at(itemNodePtr->getValue()));
+				} catch (...) {
+					//nothing
 				}
 			}
 		}
+		// cart items populated. now insert.
 		mutexGlobal.lock();
-		cartListObject->insert(cartPtr);
+		cartListPtr->insert(cartPtr);
 		mutexGlobal.unlock();
 	}
 	return true;
@@ -901,13 +912,13 @@ bool CartLane::process() {
 /*
  * Code39Item Implementation
  */
-Code39Item::Code39Item(Code39CharTable* code39CharTablePtr) {
+Code39Item::Code39Item(shared_ptr<Code39CharTable> code39CharTablePtr) {
 	code39CharTable = code39CharTablePtr;
 }
 
 void Code39Item::setBinaryString(string binaryString_) {
 	unsigned int i, n;
-	n = binaryString_.size();
+	n = static_cast<unsigned int>(binaryString_.size());
 	// must have at least one code39 char
 	if (n / 9 > 0 && n % 9 == 0) {
 		for (i = 0; i < n; i++) {
@@ -918,7 +929,7 @@ void Code39Item::setBinaryString(string binaryString_) {
 }
 void Code39Item::setCodeString(string codeString_) {
 	unsigned int i, n, temp;
-	n = codeString_.size();
+	n = static_cast<unsigned int>(codeString_.size());
 	for (i = 0; i < n; i++) {
 		code39CharTable->charToInt(codeString_[i], temp);
 		intQueue.push(temp);
@@ -959,21 +970,22 @@ bool Code39Item::toBinaryString(string& code39CharItem) {
  */
 Parser::Parser() {
 }
-bool Parser::productListXMLNodetoObject(XMLNode& productListXMLNode,
-		ProductTable& productTableObject) {
+bool Parser::productListXMLNodetoObject(
+		shared_ptr<XMLNode> productListXMLNodePtr,
+		shared_ptr<ProductTable> productTablePtr) {
 	bool returnValue = false;
 	unsigned int i, n;
-	XMLNode* nodeBarcodeList, *nodeProduct, *nodeName, *nodePrice;
+	shared_ptr<XMLNode> nodeBarcodeList, nodeProduct, nodeName, nodePrice;
 	// BarcodeList level
-	if (productListXMLNode.findChild("BarcodeList", nodeBarcodeList, 0)) {
+	if (productListXMLNodePtr->findChild("BarcodeList", nodeBarcodeList, 0)) {
 		returnValue = true;
 		n = nodeBarcodeList->findChildSize("Product");
 		for (i = 0; i < n; i++) {
 			if (nodeBarcodeList->findChild("Product", nodeProduct, i)) {
 				if (nodeProduct->findChild("Name", nodeName, 0)
 						&& nodeProduct->findChild("Price", nodePrice, 0)) {
-					if (!productTableObject.insert(
-							new Product(nodeName->getValue(),
+					if (!productTablePtr->insert(
+							make_shared<Product>(nodeName->getValue(),
 									stod(nodePrice->getValue())))) {
 						// too many hash collisions. discard product.
 						cout
@@ -986,34 +998,39 @@ bool Parser::productListXMLNodetoObject(XMLNode& productListXMLNode,
 	}
 	return returnValue;
 }
-bool Parser::cartListXMLNodetoObject(XMLNode& cartListXMLNode,
-		CartList& cartListObject, ProductTable& productTableObject) {
+bool Parser::cartListXMLNodetoObject(shared_ptr<XMLNode> cartListXMLNodePtr,
+		shared_ptr<CartList> cartListPtr,
+		shared_ptr<ProductTable> productTablePtr) {
 	bool returnValue = false;
-	unsigned int i, n, cartNumber, cartLaneRange;
-	XMLNode* nodeXMLCarts;
-	vector<thread*> threadList;
+	unsigned int i, n;
+	shared_ptr<XMLNode> nodeXMLCarts;
+	vector < unique_ptr < thread >> threadPtrList;
+	shared_ptr<queue<shared_ptr<XMLNode>>> cartXMLNodeQueuePtr;
 	// XMLCarts level
-	if (cartListXMLNode.findChild("XMLCarts", nodeXMLCarts, 0)) {
-		returnValue = true;
-		// create the lanes
-		CartLane cartLane[CART_PROCESSING_THREADS];
-		n = nodeXMLCarts->childrenSize();
-		cartLaneRange = n / CART_PROCESSING_THREADS;
-		// distribute carts in lanes
-		for (i = 0; i < CART_PROCESSING_THREADS; i++) {
-			cartLane[i].init(nodeXMLCarts, cartListObject, productTableObject);
-			if (i + 1 == CART_PROCESSING_THREADS) {
-				cartLane[i].range(i * cartLaneRange, n + 1);
-			} else {
-				cartLane[i].range(i * cartLaneRange, (i + 1) * cartLaneRange);
+	if (cartListXMLNodePtr->findChild("XMLCarts", nodeXMLCarts, 0)) {
+		if (nodeXMLCarts != nullptr) {
+			returnValue = true;
+			// create a cart queue
+			n = nodeXMLCarts->childrenSize();
+			for (i = 0; i < n; i++) {
+				cartXMLNodeQueuePtr->push(
+						shared_ptr<XMLNode>(nodeXMLCarts->getChild(i)));
 			}
+		}
+		// create the lanes
+		vector<shared_ptr<CartLane>> cartLaneList;
+		for (i = 0; i < CART_PROCESSING_THREADS; i++) {
+			cartLaneList.push_back(make_shared<CartLane>());
+			cartLaneList[i]->init(cartXMLNodeQueuePtr, cartListPtr,
+					productTablePtr);
 			// cartLane[i].process();
-			threadList.push_back(new thread(&CartLane::process, &cartLane[i]));
+			threadPtrList.push_back(
+					make_unique<thread>(&CartLane::process, cartLaneList[i]));
 		}
 		// block threads
-		n = threadList.size();
+		n = static_cast<unsigned int>(threadPtrList.size());
 		for (i = 0; i < n; i++) {
-			threadList[i]->join();
+			threadPtrList[i]->join();
 		}
 	}
 	return returnValue;
@@ -1044,9 +1061,12 @@ int main() {
 	fileNameCarts = "Carts.xml";
 	fileNameCartsList = "cartsList.txt";
 	// parse XML file streams into an XML document node
-	XMLNode ProductsXML, CartsXML;
-	ProductTable productTable;
-	CartList cartList;
+	//shared_ptr<XMLNode> ProductXMLNodePtr, CartXMLNodePtr;
+	shared_ptr<ProductTable> productTablePtr;
+	shared_ptr<CartList> cartListPtr;
+
+	shared_ptr<XMLNode> ProductXMLNodePtr = make_shared<XMLNode>("Root");
+	shared_ptr<XMLNode> CartXMLNodePtr = make_shared<XMLNode>("Root");
 	if (!fh.readStream(fileNameProducts, fileStreamInProducts)
 			|| !fh.readStream(fileNameCarts, fileStreamInCarts)) {
 		cout << "Could not read either of the input files." << endl;
@@ -1057,15 +1077,16 @@ int main() {
 		 * This way very large files won't lag or crash the program.
 		 */
 		parseProductsXMLFuture = async(&XMLParser::documentStream, &xmlparser,
-				ref((istream&) fileStreamInProducts), ref(ProductsXML));
+				ref((istream&) fileStreamInProducts), ref(ProductXMLNodePtr));
 		parseCartsXMLFuture = async(&XMLParser::documentStream, &xmlparser,
-				ref((istream&) fileStreamInCarts), ref(CartsXML));
+				ref((istream&) fileStreamInCarts), ref(CartXMLNodePtr));
 		if (parseProductsXMLFuture.get()) {
 			cout
 					<< "Successfully parsed Product List XML File to Product List Nodes."
 					<< endl;
 			// create the product table from the product list XML
-			if (parser.productListXMLNodetoObject(ProductsXML, productTable)) {
+			if (parser.productListXMLNodetoObject(ProductXMLNodePtr,
+					productTablePtr)) {
 				//fh.writeString("productList.txt", productTable.toString());
 				cout
 						<< "Successfully parsed Product List XML Nodes into hash table."
@@ -1086,8 +1107,9 @@ int main() {
 		fh.close(fileStreamInProducts);
 		fh.close(fileStreamInCarts);
 		//cout << "XML Files successfully parsed!" << endl;
-		if (parser.cartListXMLNodetoObject(CartsXML, cartList, productTable)) {
-			if (fh.writeString(fileNameCartsList, cartList.toString())) {
+		if (parser.cartListXMLNodetoObject(CartXMLNodePtr, cartListPtr,
+				productTablePtr)) {
+			if (fh.writeString(fileNameCartsList, cartListPtr->toString())) {
 				cout << "Carts list written to \"" << fileNameCartsList << "\""
 						<< endl;
 			}

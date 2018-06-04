@@ -1,14 +1,7 @@
 ﻿  CIS29Lab3.cpp
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(832): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(905): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(916): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(1009): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(987): warning C4101: 'cartNumber': unreferenced local variable
-c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(372): warning C4267: 'return': conversion from 'size_t' to 'unsigned int', possible loss of data
-  c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(371): note: while compiling class template member function 'unsigned int HashTable<std::string,Product *>::size(void)'
-  c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(767): note: see reference to function template instantiation 'unsigned int HashTable<std::string,Product *>::size(void)' being compiled
-  c:\users\admin\documents\github\cis_29_lab_3\src\cis29lab3.cpp(160): note: see reference to class template instantiation 'HashTable<std::string,Product *>' being compiled
   Generating code
-  All 2466 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  3 of 2707 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
+    1 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
-  CIS_29_Lab_3.vcxproj -> C:\Users\admin\Documents\GitHub\CIS_29_Lab_3\x64\Release\CIS_29_Lab_3.exe
+  CIS_29_Lab_3.vcxproj -> C:\github\CIS_29_Lab_3\x64\Release\CIS_29_Lab_3.exe
