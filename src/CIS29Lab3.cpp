@@ -15,6 +15,9 @@
  *
  * Despite this, In this revision I have added smart pointers for the sake of learning and changed the cart processing algorithm
  * a bit to make the output results differ a lot more than previously after each run.
+ *
+ * 2018-06-05
+ * The revision was finished, but the results became even more consistent. However, memory usage is halved due to smart pointers.
  * */
 
 #include <string>
@@ -136,11 +139,11 @@ public:
 	 * destructor removed. smart pointers will do this.
 	 * */
 	bool documentStream(istream& streamIn, shared_ptr<XMLNode> xmlDoc);
-	bool bufferSearch(string& streamBuffer, shared_ptr<XMLNode> xmlNodeCurrent,
+	bool bufferSearch(string& streamBuffer, shared_ptr<XMLNode>& xmlNodeCurrent,
 			stack<shared_ptr<XMLNode>>& documentStack, unsigned int& mode);
-	bool nodePop(string& tagString, shared_ptr<XMLNode> xmlNodeCurrent,
+	bool nodePop(string& tagString, shared_ptr<XMLNode>& xmlNodeCurrent,
 			stack<shared_ptr<XMLNode>>& documentStack);
-	bool nodePush(string& tagString, shared_ptr<XMLNode> xmlNodeCurrent,
+	bool nodePush(string& tagString, shared_ptr<XMLNode>& xmlNodeCurrent,
 			stack<shared_ptr<XMLNode>>& documentStack);
 };
 
@@ -224,6 +227,7 @@ public:
 	~CartList() {
 	}
 	void insert(shared_ptr<Cart> cartPtr);
+	unsigned int size();
 	string toString();
 };
 
@@ -425,6 +429,7 @@ string XMLNode::getValue() {
 }
 shared_ptr<XMLNode> XMLNode::addChild(string str) {
 	shared_ptr<XMLNode> childNode = make_shared<XMLNode>(str);
+	//cout << "child " << str << " name: "<<name << endl;
 	childNodes.push_back(childNode);
 	return childNode;
 }
@@ -517,12 +522,11 @@ bool XMLParser::documentStream(istream& streamIn, shared_ptr<XMLNode> xmlDoc) {
 	}
 	// remaining buffer belongs to current node value
 	xmlNodeCurrent->valueAppend(streamBuffer);
-	cout << "why " << xmlDoc->childrenSize() << endl;
 	return true;
 }
 
 bool XMLParser::bufferSearch(string& streamBuffer,
-		shared_ptr<XMLNode> xmlNodeCurrent,
+		shared_ptr<XMLNode>& xmlNodeCurrent,
 		stack<shared_ptr<XMLNode>>& documentStack, unsigned int& mode) {
 	unsigned int ticks = 0;
 	unsigned int tagOpenPos, tagEndPos, noPos;
@@ -562,10 +566,9 @@ bool XMLParser::bufferSearch(string& streamBuffer,
 					} catch (...) {
 						matchGroupString = "";
 					}
-					string s;
-					s.append("</").append(matchGroupString).append("> ").append(
-							streamBuffer).append("\n");
-					cout << s;
+					/*string s;
+					 s.append("</").append(matchGroupString).append(">\n");
+					 cout << s;*/
 					nodePop(matchGroupString, xmlNodeCurrent, documentStack);
 				} else {
 					// now check if we just ended an opening tag <>
@@ -577,12 +580,11 @@ bool XMLParser::bufferSearch(string& streamBuffer,
 						} catch (...) {
 							matchGroupString = "";
 						}
-						/*
-						string s;
-						s.append("<").append(matchGroupString).append("> ").append(
-								streamBuffer).append("\n");
-						cout << s;
-						*/
+
+						/*string s;
+						 s.append("<").append(matchGroupString).append(">\n");
+						 cout << s;*/
+
 						nodePush(matchGroupString, xmlNodeCurrent,
 								documentStack);
 					}
@@ -598,7 +600,7 @@ bool XMLParser::bufferSearch(string& streamBuffer,
 	return true;
 }
 
-bool XMLParser::nodePop(string& tagString, shared_ptr<XMLNode> xmlNodeCurrent,
+bool XMLParser::nodePop(string& tagString, shared_ptr<XMLNode>& xmlNodeCurrent,
 		stack<shared_ptr<XMLNode>>& documentStack) {
 	/* pop nodes off stack until end tag is found
 	 * can't go lower than the document root
@@ -620,7 +622,7 @@ bool XMLParser::nodePop(string& tagString, shared_ptr<XMLNode> xmlNodeCurrent,
 	return true;
 }
 
-bool XMLParser::nodePush(string& tagString, shared_ptr<XMLNode> xmlNodeCurrent,
+bool XMLParser::nodePush(string& tagString, shared_ptr<XMLNode>& xmlNodeCurrent,
 		stack<shared_ptr<XMLNode>>& documentStack) {
 	if (tagString.length() > 0) {
 		xmlNodeCurrent = xmlNodeCurrent->addChild(tagString);
@@ -849,6 +851,9 @@ string Cart::toString() {
 void CartList::insert(shared_ptr<Cart> cartPtr) {
 	cartList.push_back(cartPtr);
 }
+unsigned int CartList::size() {
+	return static_cast<unsigned int>(cartList.size());
+}
 string CartList::toString() {
 	string str = "";
 	str.append(" Cart List \n-----------\n");
@@ -885,10 +890,14 @@ bool CartLane::process() {
 		mutexGlobal.lock();
 		flag = cartXMLNodeQueuePtr->empty();
 		mutexGlobal.unlock();
-		if (!flag) {
+		if (flag) {
 			break;
 		}
+		// take cart XML node off top and pop
+		mutexGlobal.lock();
 		cartNodePtr = cartXMLNodeQueuePtr->front();
+		cartXMLNodeQueuePtr->pop();
+		mutexGlobal.unlock();
 		/* extract the cart number
 		 * stoi could throw exceptions
 		 */
@@ -1015,18 +1024,16 @@ bool Parser::cartListXMLNodetoObject(shared_ptr<XMLNode> cartListXMLNodePtr,
 	bool returnValue = false;
 	unsigned int i, n;
 	shared_ptr<XMLNode> nodeXMLCarts;
-	vector<unique_ptr<thread>> threadPtrList;
-	shared_ptr<queue<shared_ptr<XMLNode>>> cartXMLNodeQueuePtr = make_shared<queue<shared_ptr<XMLNode>>>();
+	vector < unique_ptr < thread >> threadPtrList;
+	shared_ptr<queue<shared_ptr<XMLNode>>> cartXMLNodeQueuePtr = make_shared<
+			queue<shared_ptr<XMLNode>>>();
 	// XMLCarts level
-	cout << "testlol " << cartListXMLNodePtr->childrenSize() << endl;
 	if (cartListXMLNodePtr->findChild("XMLCarts", nodeXMLCarts, 0)) {
 		if (nodeXMLCarts) {
 			returnValue = true;
 			// create a cart queue
 			n = nodeXMLCarts->childrenSize();
-			cout << "test " << n << endl;
 			for (i = 0; i < n; i++) {
-				cout << "test " << nodeXMLCarts->getChild(i)->getName() << endl;
 				cartXMLNodeQueuePtr->push(nodeXMLCarts->getChild(i));
 			}
 		}
@@ -1038,7 +1045,7 @@ bool Parser::cartListXMLNodetoObject(shared_ptr<XMLNode> cartListXMLNodePtr,
 					productTablePtr);
 			// cartLane[i].process();
 			threadPtrList.push_back(
-					make_unique<thread>(&CartLane::process, cartLaneList[i]));
+					make_unique<thread>(&CartLane::process, &*cartLaneList[i]));
 		}
 		// block threads
 		n = static_cast<unsigned int>(threadPtrList.size());
