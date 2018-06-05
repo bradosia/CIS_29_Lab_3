@@ -874,10 +874,18 @@ bool CartLane::process() {
 	unsigned int i, n, cartNumber;
 	shared_ptr<XMLNode> cartNodePtr, itemNodePtr;
 	shared_ptr<Cart> cartPtr;
+	bool flag = false;
 	/* keep processing cart XML nodes from the queue until
 	 * the queue is empty */
-	while (!cartXMLNodeQueuePtr->empty()) {
-		cartNodePtr = cartXMLNodeQueuePtr->front();
+	while (true) {
+		/* test if the queue is empty and exit loop */
+		mutexGlobal.lock();
+		flag = cartXMLNodeQueuePtr->empty();
+		mutexGlobal.unlock();
+		if (!flag) {
+			break;
+		}
+		shared_ptr<XMLNode> cartNodePtr = cartXMLNodeQueuePtr->front();
 		/* extract the cart number
 		 * stoi could throw exceptions
 		 */
@@ -1005,7 +1013,7 @@ bool Parser::cartListXMLNodetoObject(shared_ptr<XMLNode> cartListXMLNodePtr,
 	unsigned int i, n;
 	shared_ptr<XMLNode> nodeXMLCarts;
 	vector < unique_ptr < thread >> threadPtrList;
-	shared_ptr<queue<shared_ptr<XMLNode>>> cartXMLNodeQueuePtr;
+	shared_ptr<queue<shared_ptr<XMLNode>>> cartXMLNodeQueuePtr = make_shared<queue<shared_ptr<XMLNode>>>();
 	// XMLCarts level
 	if (cartListXMLNodePtr->findChild("XMLCarts", nodeXMLCarts, 0)) {
 		if (nodeXMLCarts != nullptr) {
@@ -1061,12 +1069,10 @@ int main() {
 	fileNameCarts = "Carts.xml";
 	fileNameCartsList = "cartsList.txt";
 	// parse XML file streams into an XML document node
-	//shared_ptr<XMLNode> ProductXMLNodePtr, CartXMLNodePtr;
-	shared_ptr<ProductTable> productTablePtr;
-	shared_ptr<CartList> cartListPtr;
-
 	shared_ptr<XMLNode> ProductXMLNodePtr = make_shared<XMLNode>("Root");
 	shared_ptr<XMLNode> CartXMLNodePtr = make_shared<XMLNode>("Root");
+	shared_ptr<ProductTable> productTablePtr = make_shared<ProductTable>();
+	shared_ptr<CartList> cartListPtr = make_shared<CartList>();
 	if (!fh.readStream(fileNameProducts, fileStreamInProducts)
 			|| !fh.readStream(fileNameCarts, fileStreamInCarts)) {
 		cout << "Could not read either of the input files." << endl;
