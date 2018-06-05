@@ -442,7 +442,7 @@ bool XMLNode::findChild(string name_, shared_ptr<XMLNode>& returnNode,
 	unsigned int findCount, i, n;
 	bool returnValue = false;
 	findCount = 0;
-	n = (unsigned int) childNodes.size();
+	n = static_cast<unsigned int>(childNodes.size());
 	for (i = 0; i < n; i++) {
 		if (childNodes[i]->name == name_) {
 			if (findCount == index) {
@@ -456,12 +456,12 @@ bool XMLNode::findChild(string name_, shared_ptr<XMLNode>& returnNode,
 	return returnValue;
 }
 unsigned int XMLNode::childrenSize() {
-	return (unsigned int) childNodes.size();
+	return static_cast<unsigned int>(childNodes.size());
 }
 unsigned int XMLNode::findChildSize(string name_) {
 	unsigned int findCount, i, n;
 	findCount = 0;
-	n = (unsigned int) childNodes.size();
+	n = static_cast<unsigned int>(childNodes.size());
 	for (i = 0; i < n; i++) {
 		if (childNodes[i]->name == name_) {
 			findCount++;
@@ -517,6 +517,7 @@ bool XMLParser::documentStream(istream& streamIn, shared_ptr<XMLNode> xmlDoc) {
 	}
 	// remaining buffer belongs to current node value
 	xmlNodeCurrent->valueAppend(streamBuffer);
+	cout << "why " << xmlDoc->childrenSize() << endl;
 	return true;
 }
 
@@ -564,7 +565,7 @@ bool XMLParser::bufferSearch(string& streamBuffer,
 					string s;
 					s.append("</").append(matchGroupString).append("> ").append(
 							streamBuffer).append("\n");
-					//cout << s;
+					cout << s;
 					nodePop(matchGroupString, xmlNodeCurrent, documentStack);
 				} else {
 					// now check if we just ended an opening tag <>
@@ -576,10 +577,12 @@ bool XMLParser::bufferSearch(string& streamBuffer,
 						} catch (...) {
 							matchGroupString = "";
 						}
+						/*
 						string s;
 						s.append("<").append(matchGroupString).append("> ").append(
 								streamBuffer).append("\n");
-						//cout << s;
+						cout << s;
+						*/
 						nodePush(matchGroupString, xmlNodeCurrent,
 								documentStack);
 					}
@@ -885,7 +888,7 @@ bool CartLane::process() {
 		if (!flag) {
 			break;
 		}
-		shared_ptr<XMLNode> cartNodePtr = cartXMLNodeQueuePtr->front();
+		cartNodePtr = cartXMLNodeQueuePtr->front();
 		/* extract the cart number
 		 * stoi could throw exceptions
 		 */
@@ -1012,17 +1015,19 @@ bool Parser::cartListXMLNodetoObject(shared_ptr<XMLNode> cartListXMLNodePtr,
 	bool returnValue = false;
 	unsigned int i, n;
 	shared_ptr<XMLNode> nodeXMLCarts;
-	vector < unique_ptr < thread >> threadPtrList;
+	vector<unique_ptr<thread>> threadPtrList;
 	shared_ptr<queue<shared_ptr<XMLNode>>> cartXMLNodeQueuePtr = make_shared<queue<shared_ptr<XMLNode>>>();
 	// XMLCarts level
+	cout << "testlol " << cartListXMLNodePtr->childrenSize() << endl;
 	if (cartListXMLNodePtr->findChild("XMLCarts", nodeXMLCarts, 0)) {
-		if (nodeXMLCarts != nullptr) {
+		if (nodeXMLCarts) {
 			returnValue = true;
 			// create a cart queue
 			n = nodeXMLCarts->childrenSize();
+			cout << "test " << n << endl;
 			for (i = 0; i < n; i++) {
-				cartXMLNodeQueuePtr->push(
-						shared_ptr<XMLNode>(nodeXMLCarts->getChild(i)));
+				cout << "test " << nodeXMLCarts->getChild(i)->getName() << endl;
+				cartXMLNodeQueuePtr->push(nodeXMLCarts->getChild(i));
 			}
 		}
 		// create the lanes
